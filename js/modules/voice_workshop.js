@@ -7,8 +7,8 @@ const VOICE_WORKSHOP_DEFAULTS = {
 };
 
 const fishAudioBlobCache = new Map();
+let fishAudioContext = null;
 let activeFishAudio = null;
-let activeFishAudioUrl = null;
 let activeFishAudioFinish = null;
 
 function getVoiceWorkshopSettings() {
@@ -276,45 +276,122 @@ function stopFishAudioPlayback() {
     activeFishAudioFinish?.();
 }
 
+function getFishAudioContext() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+    if (!fishAudioContext) fishAudioContext = new AudioContextClass();
+    return fishAudioContext;
+}
+
 async function playFishAudioBlob(blob, shouldPlay = () => true) {
     if (!shouldPlay()) return;
     stopFishAudioPlayback();
+
+    const audioContext = getFishAudioContext();
+    if (!audioContext) {
+        await playFishAudioWithElement(blob, shouldPlay);
+        return;
+    }
+
+    try {
+        if (audioContext.state === 'suspended') await audioContext.resume();
+        const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer());
+        if (!shouldPlay()) return;
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioContext.destination);
+        activeFishAudio = source;
+
+        await new Promise((resolve, reject) => {
+            let settled = false;
+            const finish = error => {
+                if (settled) return;
+                settled = true;
+                source.onended = null;
+                if (activeFishAudio === source) {
+                    activeFishAudio = null;
+                    activeFishAudioFinish = null;
+                }
+                if (error) reject(error);
+                else resolve();
+            };
+            activeFishAudioFinish = () => {
+                try {
+                    source.stop();
+                } catch (_) {
+                    finish();
+                    return;
+                }
+                finish();
+            };
+            source.onended = () => finish();
+            try {
+                source.start();
+            } catch (error) {
+                finish(error);
+            }
+        });
+    } catch (error) {
+        if (error.name === 'NotAllowedError' || audioContext.state === 'suspended') {
+            throw new Error('浏览器阻止了通话自动播放，请重新接通通话后再试，或单击语音手动播放。');
+        }
+        throw new Error(`语音已生成，但播放失败：${error.message || '音频解码失败'}`);
+    }
+}
+
+async function playFishAudioWithElement(blob, shouldPlay) {
+    if (!shouldPlay()) return;
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
     activeFishAudio = audio;
-    activeFishAudioUrl = url;
 
-    await new Promise((resolve, reject) => {
-        let settled = false;
-        const finish = error => {
-            if (settled) return;
-            settled = true;
-            audio.onended = null;
-            audio.onerror = null;
-            if (activeFishAudio === audio) {
-                activeFishAudio = null;
-                activeFishAudioUrl = null;
-                activeFishAudioFinish = null;
-            }
-            URL.revokeObjectURL(url);
-            if (error) reject(error);
-            else resolve();
-        };
-        activeFishAudioFinish = () => {
-            audio.pause();
-            finish();
-        };
-        audio.onended = () => finish();
-        audio.onerror = () => finish(new Error('音频播放失败'));
-        audio.play().catch(finish);
-    });
+    try {
+        await new Promise((resolve, reject) => {
+            let settled = false;
+            const finish = error => {
+                if (settled) return;
+                settled = true;
+                audio.onended = null;
+                audio.onerror = null;
+                if (activeFishAudio === audio) {
+                    activeFishAudio = null;
+                    activeFishAudioFinish = null;
+                }
+                if (error) reject(error);
+                else resolve();
+            };
+            activeFishAudioFinish = () => {
+                audio.pause();
+                finish();
+            };
+            audio.onended = () => finish();
+            audio.onerror = () => finish(new Error('音频已生成，但浏览器播放失败'));
+            audio.play().catch(finish);
+        });
+    } catch (error) {
+        if (error.name === 'NotAllowedError') {
+            throw new Error('浏览器阻止了通话自动播放，请单击语音手动播放。');
+        }
+        throw error;
+    } finally {
+        if (audio.src) URL.revokeObjectURL(url);
+    }
 }
 
 window.FishAudioVoice = {
     autoPlayEnabled() {
         return getVoiceWorkshopSettings().autoPlay === true;
     },
+    unlock() {
+        const audioContext = getFishAudioContext();
+        if (!audioContext || audioContext.state !== 'suspended') return Promise.resolve();
+        return audioContext.resume().catch(error => {
+            console.warn('Could not unlock Fish Audio playback:', error);
+        });
+    },
     playText(chat, characterId, text, options = {}) {
+        if (options.shouldPlay && !options.shouldPlay()) return Promise.resolve();
         const spokenText = normalizeFishAudioText(text);
         if (!spokenText) return Promise.resolve();
         const voiceId = getFishAudioVoiceId(chat, characterId, options.senderId, options.senderName);

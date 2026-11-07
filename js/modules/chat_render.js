@@ -911,6 +911,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
             bubbleElement.title = '单击生成并播放，双击展开文字';
             let voiceClickTimer;
             bubbleElement.addEventListener('click', () => {
+                window.FishAudioVoice?.unlock();
                 clearTimeout(voiceClickTimer);
                 voiceClickTimer = setTimeout(() => {
                     window.FishAudioVoice?.playText(chat, null, voiceMatch[2].trim(), {

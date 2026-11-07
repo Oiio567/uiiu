@@ -462,6 +462,7 @@ const VideoCallModule = {
     },
 
     startCall: async function(type, isIncoming = false, chatObject = null) {
+        window.FishAudioVoice?.unlock();
         this.hideCallTypeModal();
         this.state.callType = type;
         this.state.isCallActive = true;
@@ -793,6 +794,7 @@ const VideoCallModule = {
                 voiceBubble.title = '单击生成并播放；文字始终完整显示';
                 let voiceClickTimer;
                 voiceBubble.addEventListener('click', () => {
+                    window.FishAudioVoice.unlock();
                     clearTimeout(voiceClickTimer);
                     voiceClickTimer = setTimeout(() => {
                         window.FishAudioVoice.playText(this.state.currentChat, null, content)
