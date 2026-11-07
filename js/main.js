@@ -243,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// === 全局救援手势 (三击清空全局CSS) ===
+// === 全局救援手势 (五击打开样式救援面板) ===
 // 将变量提升到顶层，防止混淆器错误处理闭包作用域
 let globalRescueClickCount = 0;
 let globalRescueLastClickTime = 0;
@@ -276,6 +276,14 @@ function showGlobalRescuePanel() {
     // 防止重复创建
     if (document.getElementById('global-rescue-panel')) return;
 
+    const getCurrentChat = () => {
+        if (!currentChatId) return null;
+        if (currentChatType === 'private') return db.characters.find(chat => chat.id === currentChatId) || null;
+        if (currentChatType === 'group') return db.groups.find(chat => chat.id === currentChatId) || null;
+        return null;
+    };
+    const hasCurrentChat = Boolean(getCurrentChat());
+
     const panel = document.createElement('div');
     panel.id = 'global-rescue-panel';
     panel.style.cssText = `
@@ -294,10 +302,11 @@ function showGlobalRescuePanel() {
             <h3 style="margin: 0 0 10px; color: #333; font-size: 18px;">全局样式救援</h3>
             <p style="margin: 0 0 20px; color: #666; font-size: 14px; line-height: 1.5;">
                 检测到您快速点击了五次屏幕。<br>
-                如果因为错误的全局 CSS 导致界面错乱，您可以在这里一键清空。
+                如果错误的样式导致界面错乱，您可以在这里清除全局或当前聊天的自定义样式。
             </p>
             <div style="display: flex; flex-direction: column; gap: 10px;">
                 <button id="rescue-clear-btn" style="background: #d32f2f; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;">清空全局 CSS</button>
+                <button id="rescue-clear-chat-bubble-css-btn" style="display: ${hasCurrentChat ? 'block' : 'none'}; background: #e67e22; color: #fff; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;">清除当前聊天自定义气泡样式</button>
                 <button id="rescue-cancel-btn" style="background: #f5f5f5; color: #666; border: none; padding: 12px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer;">取消</button>
             </div>
         </div>
@@ -317,6 +326,42 @@ function showGlobalRescuePanel() {
             showToast('全局 CSS 已清空，界面应已恢复正常。');
             panel.remove();
         }
+    };
+
+    document.getElementById('rescue-clear-chat-bubble-css-btn').onclick = async () => {
+        const chat = getCurrentChat();
+        if (!chat) {
+            showToast('当前没有可清除设置的聊天');
+            return;
+        }
+        if (!confirm('确定要清除当前聊天的自定义气泡样式吗？此操作不可撤销。')) return;
+
+        const previousCss = chat.customBubbleCss;
+        const previousEnabled = chat.useCustomBubbleCss;
+        chat.customBubbleCss = '';
+        chat.useCustomBubbleCss = false;
+
+        try {
+            await saveData();
+        } catch (error) {
+            chat.customBubbleCss = previousCss;
+            chat.useCustomBubbleCss = previousEnabled;
+            console.error('Failed to clear current chat bubble CSS:', error);
+            showToast('清除当前聊天自定义气泡样式失败，请重试。');
+            return;
+        }
+
+        updateCustomBubbleStyle(currentChatId, chat.customBubbleCss, chat.useCustomBubbleCss);
+        const isPrivateChat = currentChatType === 'private';
+        const cssTextarea = document.getElementById(isPrivateChat ? 'setting-custom-bubble-css' : 'setting-group-custom-bubble-css');
+        const cssCheckbox = document.getElementById(isPrivateChat ? 'setting-use-custom-css' : 'setting-group-use-custom-css');
+        const preview = document.getElementById(isPrivateChat ? 'private-bubble-css-preview' : 'group-bubble-css-preview');
+        if (cssTextarea) cssTextarea.value = '';
+        if (cssCheckbox) cssCheckbox.checked = false;
+        if (preview) preview.innerHTML = '';
+
+        showToast('当前聊天的自定义气泡样式已清除。');
+        panel.remove();
     };
 
     document.getElementById('rescue-cancel-btn').onclick = () => {

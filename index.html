@@ -52,6 +52,7 @@
     <link rel="stylesheet" href="css/modules/video_call.css?v=20261028r4">
     <link rel="stylesheet" href="css/modules/storage.css?v=20261028r4">
     <link rel="stylesheet" href="css/workshop.css?v=20261028r4">
+    <link rel="stylesheet" href="css/modules/voice_workshop.css?v=20261107">
     <link rel="stylesheet" href="css/modules/console.css?v=20261028r4">
     <link rel="stylesheet" href="css/modules/community.css?v=20261028r4">
     <link rel="stylesheet" href="css/modules/reader.css?v=20261028r4">
@@ -828,6 +829,15 @@
                             </svg>
                         </div>
                         <span class="menu-item-label">绘图工坊</span>
+                    </div>
+                    <div class="menu-item" data-action="voice-workshop">
+                        <div class="menu-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/>
+                                <path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v4m-4 0h8"/>
+                            </svg>
+                        </div>
+                        <span class="menu-item-label">语音工坊</span>
                     </div>
                 </div>
             </div>
@@ -1941,6 +1951,10 @@
 
     <!-- SCENE 2: 通话界面 -->
     <div id="vc-scene-call" class="vc-scene vc-hidden">
+        <img id="vc-call-background-image" class="vc-call-background-image" alt="" hidden>
+        <button type="button" class="vc-call-save-image-btn" id="vc-call-save-image-btn" aria-label="保存生成的图片" title="保存图片" hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>
+        </button>
         <div class="vc-call-header">
             <div class="vc-contact-info">
                 <div class="name" id="vc-call-name">Unknown</div>
@@ -1974,6 +1988,12 @@
                      </div>
                     <span class="vc-c-label">Speak</span>
                 </div>
+                <button type="button" class="vc-c-btn vc-call-image-btn" id="vc-call-image-btn" aria-label="根据通话画面生成图片" hidden>
+                    <div class="vc-c-icon-box">
+                        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="m12 2 1.7 5.3L19 9l-5.3 1.7L12 16l-1.7-5.3L5 9l5.3-1.7L12 2Zm7 12 .9 2.1L22 17l-2.1.9L19 20l-.9-2.1L16 17l2.1-.9L19 14ZM5 15l1.2 2.8L9 19l-2.8 1.2L5 23l-1.2-2.8L1 19l2.8-1.2L5 15Z"/></svg>
+                    </div>
+                    <span class="vc-c-label">生图</span>
+                </button>
                 <div class="vc-c-btn vc-btn-hangup" id="vc-call-hangup-btn">
                      <div class="vc-c-icon-box"><div class="vc-icon-hangup"></div></div>
                     <span class="vc-c-label">End</span>
@@ -2787,6 +2807,7 @@
 <script src="js/modules/image-workshop/history.js?v=20261028r4"></script>
 <script src="js/modules/image-workshop/char.js?v=20261028r4"></script>
 <script src="js/workshop.js?v=20261028r4"></script> <!-- 绘图工坊模块 -->
+<script src="js/modules/voice_workshop.js?v=20261107"></script>
 <script src="js/modules/console.js?v=20261028r4"></script> <!-- 控制台模块 -->
 <script src="js/modules/community.js?v=20261028r4"></script> <!-- 社区模块 -->
 <script src="js/modules/st_unlock.js?v=20261028r4"></script> <!-- 酒馆解锁模块 -->

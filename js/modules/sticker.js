@@ -271,6 +271,123 @@ async function setupStickerSystem() {
             }
         }
     });
+
+    setupStickerSuggestions();
+}
+
+function setupStickerSuggestions() {
+    const messageInput = document.getElementById('message-input');
+    const suggestions = document.getElementById('sticker-suggestions');
+    if (!messageInput || !suggestions) return;
+
+    messageInput.setAttribute('aria-controls', 'sticker-suggestions');
+    messageInput.setAttribute('aria-autocomplete', 'list');
+    let matchingStickers = [];
+    let activeIndex = 0;
+
+    const hideSuggestions = () => {
+        suggestions.hidden = true;
+        messageInput.setAttribute('aria-expanded', 'false');
+        suggestions.replaceChildren();
+        matchingStickers = [];
+        activeIndex = 0;
+    };
+
+    const selectSuggestion = async (sticker) => {
+        hideSuggestions();
+        try {
+            await sendSticker(sticker);
+            messageInput.value = '';
+        } catch (error) {
+            console.error('发送联想表情包失败:', error);
+            showToast('表情包发送失败，请重试');
+            renderSuggestions();
+        }
+    };
+
+    const renderSuggestions = () => {
+        const inputText = messageInput.value.trim().toLocaleLowerCase();
+        if (!inputText || !Array.isArray(db.myStickers) || db.myStickers.length === 0) {
+            hideSuggestions();
+            return;
+        }
+
+        const lastWord = inputText.split(/\s+/).pop();
+        matchingStickers = db.myStickers
+            .filter(sticker => {
+                const name = String(sticker.name || '').trim().toLocaleLowerCase();
+                return name && (name.includes(lastWord) || inputText.includes(name));
+            })
+            .sort((a, b) => {
+                const aName = String(a.name || '').toLocaleLowerCase();
+                const bName = String(b.name || '').toLocaleLowerCase();
+                const aStartsWithQuery = aName.startsWith(lastWord) ? 0 : 1;
+                const bStartsWithQuery = bName.startsWith(lastWord) ? 0 : 1;
+                return aStartsWithQuery - bStartsWithQuery || aName.localeCompare(bName);
+            })
+            .slice(0, 6);
+
+        if (matchingStickers.length === 0) {
+            hideSuggestions();
+            return;
+        }
+
+        activeIndex = 0;
+        suggestions.replaceChildren();
+        matchingStickers.forEach((sticker, index) => {
+            const option = document.createElement('button');
+            option.type = 'button';
+            option.className = `sticker-suggestion${index === activeIndex ? ' active' : ''}`;
+            option.setAttribute('role', 'option');
+            option.setAttribute('aria-selected', index === activeIndex ? 'true' : 'false');
+            option.setAttribute('aria-label', `发送表情包：${sticker.name}`);
+
+            const image = document.createElement('img');
+            image.src = sticker.data;
+            image.alt = '';
+            image.loading = 'lazy';
+            const name = document.createElement('span');
+            name.textContent = sticker.name;
+            option.append(image, name);
+
+            option.addEventListener('pointerdown', event => event.preventDefault());
+            option.addEventListener('click', () => selectSuggestion(sticker));
+            suggestions.appendChild(option);
+        });
+        suggestions.hidden = false;
+        messageInput.setAttribute('aria-expanded', 'true');
+    };
+
+    const updateActiveSuggestion = () => {
+        suggestions.querySelectorAll('.sticker-suggestion').forEach((option, index) => {
+            const isActive = index === activeIndex;
+            option.classList.toggle('active', isActive);
+            option.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        });
+        suggestions.querySelector('.sticker-suggestion.active')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+
+    messageInput.addEventListener('input', renderSuggestions);
+    messageInput.addEventListener('blur', () => {
+        setTimeout(() => {
+            if (!suggestions.contains(document.activeElement)) hideSuggestions();
+        }, 0);
+    });
+    messageInput.addEventListener('keydown', event => {
+        if (suggestions.hidden) return;
+
+        if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            const direction = event.key === 'ArrowDown' ? 1 : -1;
+            activeIndex = (activeIndex + direction + matchingStickers.length) % matchingStickers.length;
+            updateActiveSuggestion();
+        } else if (event.key === 'Enter') {
+            hideSuggestions();
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            hideSuggestions();
+        }
+    });
 }
 
 function renderStickerCategories() {

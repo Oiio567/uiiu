@@ -11,9 +11,12 @@ const VideoCallModule = {
         seconds: 0,
         currentChat: null,
         currentCallContext: [], // 存储当前通话的消息记录
+        currentCallImage: null,
         startTime: 0,
         isAiSpeaking: false, // 防止用户连续输入
         isGenerating: false, // 标记是否正在请求AI生成
+        isGeneratingImage: false,
+        callVoiceQueue: Promise.resolve(),
         initialAiResponse: null, // 存储开场白
         incomingChat: null, // 暂存来电对象
         isMinimized: false // 是否处于悬浮窗模式
@@ -67,6 +70,16 @@ const VideoCallModule = {
         const callHangupBtn = document.getElementById('vc-call-hangup-btn');
         if (callHangupBtn) {
             callHangupBtn.addEventListener('click', () => this.endCall());
+        }
+
+        const callImageBtn = document.getElementById('vc-call-image-btn');
+        if (callImageBtn) {
+            callImageBtn.addEventListener('click', () => this.generateCallImage());
+        }
+
+        const saveCallImageBtn = document.getElementById('vc-call-save-image-btn');
+        if (saveCallImageBtn) {
+            saveCallImageBtn.addEventListener('click', () => this.saveCallImage());
         }
 
         // 绑定摄像头开关 (模拟)
@@ -454,6 +467,8 @@ const VideoCallModule = {
         this.state.isCallActive = true;
         this.state.seconds = 0;
         this.state.currentCallContext = [];
+        this.state.callVoiceQueue = Promise.resolve();
+        this.state.currentCallImage = null;
         this.state.startTime = Date.now();
         this.state.isAiSpeaking = false;
         this.state.initialAiResponse = null;
@@ -472,6 +487,18 @@ const VideoCallModule = {
             return;
         }
         this.state.currentChat = chat;
+        const callImageBtn = document.getElementById('vc-call-image-btn');
+        const callControls = document.querySelector('.vc-controls');
+        const canGenerateCallImage = type === 'video' && chat.videoCallImageEnabled === true;
+        if (callImageBtn) callImageBtn.hidden = !canGenerateCallImage;
+        if (callControls) callControls.classList.toggle('has-call-image', canGenerateCallImage);
+        const callBackgroundImage = document.getElementById('vc-call-background-image');
+        const saveCallImageBtn = document.getElementById('vc-call-save-image-btn');
+        if (callBackgroundImage) {
+            callBackgroundImage.removeAttribute('src');
+            callBackgroundImage.hidden = true;
+        }
+        if (saveCallImageBtn) saveCallImageBtn.hidden = true;
 
         if (!isIncoming) {
             const myName = chat.myName || (chat.me ? chat.me.nickname : '我');
@@ -694,7 +721,7 @@ const VideoCallModule = {
             content = content.trim();
             
             let type = 'voice';
-            if (tag.includes('画面') || tag.includes('环境') || tag.includes('动作')) {
+            if (tag.includes('画面') || tag.includes('环境') || tag.includes('动作') || tag.includes('旁白')) {
                 type = 'visual';
             }
             
@@ -720,6 +747,12 @@ const VideoCallModule = {
                 <div class="vc-deco-line"></div>
                 <div class="vc-text-visual ${who}">${content}</div>
             `;
+        } else if (type === 'image') {
+            const image = document.createElement('img');
+            image.className = 'vc-msg-image';
+            image.alt = '视频通话生成的画面';
+            image.src = /^(https?:|data:image\/)/i.test(content) ? content : `data:image/png;base64,${content}`;
+            msgDiv.appendChild(image);
         } else {
             // --- 双语解析逻辑 ---
             let displayContent = content;
@@ -751,6 +784,40 @@ const VideoCallModule = {
                 msgDiv.innerHTML = `
                     <div class="vc-text-voice ${who}">${content}</div>
                 `;
+            }
+        }
+
+        if (who === 'ai' && type === 'voice' && window.FishAudioVoice) {
+            const voiceBubble = msgDiv.querySelector('.vc-text-voice');
+            if (voiceBubble) {
+                voiceBubble.title = '单击生成并播放，双击展开文字';
+                let voiceClickTimer;
+                voiceBubble.addEventListener('click', () => {
+                    clearTimeout(voiceClickTimer);
+                    voiceClickTimer = setTimeout(() => {
+                        window.FishAudioVoice.playText(this.state.currentChat, null, content)
+                            .catch(error => showToast(error.message || '语音播放失败'));
+                    }, 260);
+                });
+                voiceBubble.addEventListener('dblclick', event => {
+                    clearTimeout(voiceClickTimer);
+                    voiceBubble.classList.toggle('expanded');
+                    event.preventDefault();
+                });
+            }
+
+            if (window.FishAudioVoice.autoPlayEnabled()) {
+                const callChat = this.state.currentChat;
+                this.state.callVoiceQueue = this.state.callVoiceQueue
+                    .catch(() => {})
+                    .then(() => window.FishAudioVoice.playText(callChat, null, content, {
+                        shouldPlay: () => this.state.isCallActive && this.state.currentChat === callChat
+                    }))
+                    .catch(error => {
+                        if (this.state.isCallActive && this.state.currentChat === callChat) {
+                            showToast(error.message || '通话语音播放失败');
+                        }
+                    });
             }
         }
         
@@ -786,9 +853,136 @@ const VideoCallModule = {
         this.state.currentCallContext.push({
             role: who,
             type: type,
-            content: content,
+            content: type === 'image' ? '[视频通话中生成了一张画面]' : content,
             timestamp: Date.now()
         });
+    },
+
+    generateCallImage: async function() {
+        const chat = this.state.currentChat;
+        if (!this.state.isCallActive || this.state.callType !== 'video' || !chat || chat.videoCallImageEnabled !== true) {
+            return;
+        }
+        if (this.state.isGeneratingImage) {
+            showToast('正在生成画面，请稍候...');
+            return;
+        }
+        if (typeof generateTagsFromDescription !== 'function' || typeof generateImageFromTags !== 'function') {
+            showToast('生图模块尚未加载，请刷新后重试');
+            return;
+        }
+
+        const context = this.state.currentCallContext.filter(message => message.type !== 'image');
+        let targetIndex = -1;
+        for (let i = context.length - 1; i >= 0; i--) {
+            if (context[i].type === 'visual') {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex === -1 && context.length > 0) targetIndex = context.length - 1;
+        if (targetIndex === -1) {
+            showToast('通话中还没有可用于生成画面的描述');
+            return;
+        }
+
+        const callStartedAt = this.state.startTime;
+        const promptHistory = context.map((message, index) => ({
+            id: `call-image-${callStartedAt}-${index}`,
+            role: message.role === 'user' ? 'user' : 'assistant',
+            content: message.content,
+            timestamp: message.timestamp
+        }));
+        const promptChat = {
+            ...chat,
+            realName: chat.realName || chat.name,
+            myName: chat.myName || chat.me?.nickname,
+            type: chat.members ? 'group' : 'private',
+            history: promptHistory
+        };
+        const targetMessageId = promptHistory[targetIndex].id;
+        const button = document.getElementById('vc-call-image-btn');
+
+        this.state.isGeneratingImage = true;
+        if (button) {
+            button.disabled = true;
+            button.querySelector('.vc-c-label').textContent = '生成中';
+        }
+
+        try {
+            const tags = await generateTagsFromDescription(promptChat, targetMessageId);
+            if (!tags || !tags.trim()) throw new Error('未能生成有效的画面提示词');
+            const imageData = await generateImageFromTags(tags, chat);
+            if (!imageData) throw new Error('生图接口没有返回图片');
+            if (this.state.isCallActive && this.state.startTime === callStartedAt) {
+                this.state.currentCallImage = imageData;
+                const backgroundImage = document.getElementById('vc-call-background-image');
+                const saveButton = document.getElementById('vc-call-save-image-btn');
+                if (backgroundImage) {
+                    backgroundImage.src = /^(https?:|data:image\/)/i.test(imageData)
+                        ? imageData
+                        : `data:image/png;base64,${imageData}`;
+                    backgroundImage.hidden = false;
+                }
+                if (saveButton) saveButton.hidden = false;
+            } else {
+                showToast('通话已结束，生成的画面未显示');
+            }
+        } catch (error) {
+            console.error('视频通话生图失败:', error);
+            showToast(`生成画面失败：${error.message}`);
+        } finally {
+            this.state.isGeneratingImage = false;
+            if (button) {
+                button.disabled = false;
+                button.querySelector('.vc-c-label').textContent = '生图';
+            }
+        }
+    },
+
+    saveCallImage: async function() {
+        const imageData = this.state.currentCallImage;
+        if (!imageData) {
+            showToast('当前没有可保存的生成图片');
+            return;
+        }
+
+        let downloadUrl = imageData;
+        let objectUrl = null;
+        let extension = 'png';
+        const dataUrlMatch = imageData.match(/^data:image\/(png|jpe?g|webp);/i);
+        if (dataUrlMatch) {
+            extension = dataUrlMatch[1].toLowerCase().replace('jpeg', 'jpg');
+        } else if (/^https?:/i.test(imageData)) {
+            try {
+                const response = await fetch(imageData);
+                if (!response.ok) throw new Error(`下载图片失败 (${response.status})`);
+                const blob = await response.blob();
+                const mimeExtension = blob.type.match(/^image\/(png|jpe?g|webp)$/i);
+                if (mimeExtension) extension = mimeExtension[1].toLowerCase().replace('jpeg', 'jpg');
+                objectUrl = URL.createObjectURL(blob);
+                downloadUrl = objectUrl;
+            } catch (error) {
+                console.error('下载通话图片失败:', error);
+                showToast(`保存图片失败：${error.message}`);
+                return;
+            }
+        } else if (imageData.startsWith('/9j/')) {
+            extension = 'jpg';
+        } else if (imageData.startsWith('UklGR')) {
+            extension = 'webp';
+        }
+
+        const link = document.createElement('a');
+        link.href = /^data:image\//i.test(downloadUrl)
+            ? downloadUrl
+            : (/^https?:/i.test(downloadUrl) ? downloadUrl : `data:image/${extension === 'jpg' ? 'jpeg' : extension};base64,${downloadUrl}`);
+        link.download = `video_call_${Date.now()}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+        showToast('图片已开始下载');
     },
 
     showContextMenu: function(x, y, messageIndex) {
@@ -954,6 +1148,7 @@ const VideoCallModule = {
     endCall: async function(isLoading = false) {
         this.state.isCallActive = false;
         this.state.isMinimized = false;
+        window.FishAudioVoice?.stop();
         
         if (this.state.timerInterval) {
             clearInterval(this.state.timerInterval);

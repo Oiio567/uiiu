@@ -31,6 +31,8 @@ function initMoreMenu() {
             showToast('收藏功能开发中...');
         } else if (action === 'drawing-workshop') {
             switchScreen('drawing-workshop-screen');
+        } else if (action === 'voice-workshop') {
+            openVoiceWorkshop();
         } else if (action === 'cot-settings') {
             switchScreen('cot-settings-screen');
         }
@@ -74,7 +76,7 @@ function escapeHtml(text) {
 }
 
 // Folders share the existing preset collection so normal save/backup includes them.
-let statusFolderId=null,statusEditorParentId=null,statusWriteBusy=false,statusPickerClose=null;
+let statusFolderId=null,statusEditorParentId=null,statusWriteBusy=false,statusPickerClose=null,randomStatusPresetIds=[];
 const statusFolderIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
 function statusItems(){return db.statusBarPresets||[];}
 function statusFind(id){return statusItems().find(p=>p.id===id);}
@@ -90,30 +92,48 @@ function statusFolderSelect(select,value){select.replaceChildren();const root=st
 async function createStatusBarFolder(){const name=prompt('文件夹名称：')?.trim();if(!name)return;const parent=statusIsFolder(statusFolderId)?statusFolderId:null;await statusWrite(()=>{db.statusBarPresets.push({id:'sb_folder_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),type:'folder',name,parentId:parent});});renderStatusBarManager();}
 async function renameStatusBarFolder(id){const folder=statusFind(id);if(folder?.type!=='folder')return;const name=prompt('文件夹名称：',folder.name)?.trim();if(!name||name===folder.name)return;await statusWrite(()=>{const current=statusFind(id);if(current?.type!=='folder')throw Error('文件夹已不存在');current.name=name;});renderStatusBarManager();}
 async function deleteStatusBarFolder(id){const folder=statusFind(id);if(folder?.type!=='folder'||!confirm('删除此文件夹？其中的状态栏和子文件夹会移回上一级，不会删除。'))return;await statusWrite(()=>{const current=statusFind(id);if(current?.type!=='folder')throw Error('文件夹已不存在');const parent=statusParent(current);for(const item of statusItems())if(item.parentId===id)item.parentId=parent;db.statusBarPresets=statusItems().filter(p=>p.id!==id);});if(statusFolderId===id)statusFolderId=null;renderStatusBarManager();}
-function openStatusBrowser({mode='select',itemId=null,onSelect}={}){
+function openStatusBrowser({mode='select',itemId=null,onSelect,selectedIds=[]}={}){
  statusPickerClose?.();let folder=null,query='';const focus=document.activeElement;
+ const selected=new Set(mode==='multi-select'?selectedIds.filter(id=>statusFind(id)&&statusFind(id).type!=='folder'):[]);
  const overlay=statusNode('div',undefined,'sb-folder-overlay'),box=statusNode('div',undefined,'sb-folder-dialog');box.setAttribute('role','dialog');box.setAttribute('aria-modal','true');box.setAttribute('aria-label',mode==='move'?'移动到文件夹':'选择状态栏');
  const close=()=>{overlay.remove();if(statusPickerClose===close)statusPickerClose=null;if(focus?.isConnected)focus.focus({preventScroll:true});};statusPickerClose=close;
  const header=statusNode('div',undefined,'sb-folder-dialog-head');header.append(statusNode('strong',mode==='move'?'移动到文件夹':'选择状态栏'),statusButton('×',close));
  const search=statusNode('input',undefined,'sb-folder-search');search.type='search';search.placeholder=mode==='move'?'搜索文件夹':'搜索状态栏';search.setAttribute('aria-label',search.placeholder);
- const crumbs=statusNode('nav',undefined,'sb-folder-crumbs'),list=statusNode('div',undefined,'sb-folder-browser-list'),footer=statusNode('div',undefined,'sb-folder-dialog-footer');
+ const crumbs=statusNode('nav',undefined,'sb-folder-crumbs'),folderActions=statusNode('div',undefined,'sb-folder-select-actions'),selectFolder=statusButton('全选当前分组',()=>{for(const preset of statusItems())if(preset.type!=='folder'&&statusParent(preset)===folder)selected.add(preset.id);draw();},'sb-folder-select-all'),clearFolder=statusButton('取消当前分组',()=>{for(const preset of statusItems())if(preset.type!=='folder'&&statusParent(preset)===folder)selected.delete(preset.id);draw();},'sb-folder-select-all'),list=statusNode('div',undefined,'sb-folder-browser-list'),footer=statusNode('div',undefined,'sb-folder-dialog-footer');
+ folderActions.append(selectFolder,clearFolder);
  const go=id=>{folder=id;query='';search.value='';draw();};
  const move=statusButton('移到这里',async()=>{if(query.trim())return;if(folder&&!statusIsFolder(folder))throw Error('目标文件夹已不存在');await statusWrite(()=>{const item=statusFind(itemId);if(!item)throw Error('状态栏或文件夹已不存在');if(item.type==='folder'&&statusDescendant(item.id,folder))throw Error('不能移入自身或子文件夹');item.parentId=folder;});close();renderStatusBarManager();},'sb-folder-primary');
- if(mode==='move')footer.append(statusButton('取消',close),move);else footer.append(statusButton('取消',close));
+ if(mode==='move')footer.append(statusButton('取消',close),move);
+ else if(mode==='multi-select')footer.append(statusButton('取消',close),statusButton('完成',()=>{onSelect?.([...selected]);close();},'sb-folder-primary'));
+ else footer.append(statusButton('取消',close));
  function draw(){
-  if(folder&&!statusIsFolder(folder))folder=null;statusCrumbs(crumbs,folder,go);list.replaceChildren();
+  if(folder&&!statusIsFolder(folder))folder=null;statusCrumbs(crumbs,folder,go);folderActions.hidden=mode!=='multi-select';list.replaceChildren();
   const term=query.trim().toLocaleLowerCase(),items=statusItems().filter(p=>mode!=='move'||p.type==='folder').filter(p=>mode!=='move'||!statusDescendant(itemId,p.id)).filter(p=>term?String(p.name||'').toLocaleLowerCase().includes(term):statusParent(p)===folder).sort((a,b)=>Number(b.type==='folder')-Number(a.type==='folder'));
   if(!items.length)list.append(statusNode('p',term?'没有匹配的内容':'文件夹为空','sb-folder-empty'));
-  for(const item of items){const isFolder=item.type==='folder',row=statusButton('',()=>{const current=statusFind(item.id);if(!current)throw Error('该条目已不存在');if(current.type==='folder')go(current.id);else{onSelect?.(current);close();}},'sb-folder-browser-row');if(isFolder){const icon=statusNode('span',undefined,'sb-folder-icon');icon.innerHTML=statusFolderIcon;row.append(icon);}const label=statusNode('span',undefined,'sb-folder-label');label.append(statusNode('span',item.name));if(term){label.append(statusNode('small',statusPath(statusParent(item)).map(p=>p.name).join(' / ')||'根目录'));}row.append(label,statusNode('span',isFolder?'›':'选择','sb-folder-row-tail'));list.append(row);}
+  for(const item of items){const isFolder=item.type==='folder';if(mode==='multi-select'&&!isFolder){const row=statusNode('label',undefined,'sb-folder-browser-row sb-folder-select-row'),checkbox=statusNode('input');checkbox.type='checkbox';checkbox.checked=selected.has(item.id);checkbox.onchange=()=>{if(checkbox.checked)selected.add(item.id);else selected.delete(item.id);};const label=statusNode('span',undefined,'sb-folder-label');label.append(statusNode('span',item.name));if(term)label.append(statusNode('small',statusPath(statusParent(item)).map(p=>p.name).join(' / ')||'根目录'));row.append(checkbox,label);list.append(row);continue;}const row=statusButton('',()=>{const current=statusFind(item.id);if(!current)throw Error('该条目已不存在');if(current.type==='folder')go(current.id);else{onSelect?.(current);close();}},'sb-folder-browser-row');if(isFolder){const icon=statusNode('span',undefined,'sb-folder-icon');icon.innerHTML=statusFolderIcon;row.append(icon);}const label=statusNode('span',undefined,'sb-folder-label');label.append(statusNode('span',item.name));if(term){label.append(statusNode('small',statusPath(statusParent(item)).map(p=>p.name).join(' / ')||'根目录'));}row.append(label,statusNode('span',isFolder?'›':'选择','sb-folder-row-tail'));list.append(row);}
   move.disabled=!!term;move.title=term?'请先进入目标文件夹':'';
  }
- search.oninput=()=>{query=search.value;draw();};overlay.onclick=e=>{if(e.target===overlay)close();};overlay.addEventListener('keydown',e=>{if(e.key==='Escape')close();});box.append(header,search,crumbs,list,footer);overlay.append(box);document.body.append(overlay);draw();search.focus({preventScroll:true});return {close,go};
+ search.oninput=()=>{query=search.value;draw();};overlay.onclick=e=>{if(e.target===overlay)close();};overlay.addEventListener('keydown',e=>{if(e.key==='Escape')close();});box.append(header,search,crumbs,folderActions,list,footer);overlay.append(box);document.body.append(overlay);draw();search.focus({preventScroll:true});return {close,go};
 }
 function openStatusBarSelector(){
  const ids=['setting-status-prompt-suffix','setting-status-regex','setting-status-replace'],fields=ids.map(id=>document.getElementById(id)),button=document.getElementById('setting-status-preset-select');
  const chatId=typeof currentChatId==='undefined'?null:currentChatId,chatType=typeof currentChatType==='undefined'?null:currentChatType;
  return openStatusBrowser({onSelect:p=>{if(fields.some((n,i)=>!n||!n.isConnected||document.getElementById(ids[i])!==n)||(typeof currentChatId!=='undefined'&&currentChatId!==chatId)||(typeof currentChatType!=='undefined'&&currentChatType!==chatType))throw Error('聊天已切换，请重新选择');fields[0].value=p.promptSuffix||'';fields[1].value=p.regexPattern||'';fields[2].value=p.replacePattern||'';if(button?.isConnected){button.value=p.id;button.textContent=p.name+' ›';}}});
 }
+function renderRandomStatusPresetButton(){
+ const button=document.getElementById('setting-status-random-select');if(!button)return;
+ const presets=randomStatusPresetIds.map(id=>statusFind(id)).filter(p=>p&&p.type!=='folder');
+ const labels=presets.map(p=>[...statusPath(statusParent(p)).map(folder=>folder.name),p.name].join(' / '));
+ button.textContent=presets.length?`已选 ${presets.length} 个状态栏 ›`:'选择随机状态栏 ›';
+ button.title=labels.join('、')||'未选择状态栏时使用上方指定配置';
+}
+function populateRandomStatusPresetSelect(ids=[]){
+ randomStatusPresetIds=[...new Set((Array.isArray(ids)?ids:[]).filter(id=>statusFind(id)&&statusFind(id).type!=='folder'))];
+ renderRandomStatusPresetButton();
+ const button=document.getElementById('setting-status-random-select');
+ if(button)button.onclick=()=>openStatusBrowser({mode:'multi-select',selectedIds:randomStatusPresetIds,onSelect:ids=>{randomStatusPresetIds=ids;renderRandomStatusPresetButton();}});
+}
+function getSelectedRandomStatusPresetIds(){return [...randomStatusPresetIds];}
 
 // 打开状态栏管理界面
 function openStatusBarManager(){renderStatusBarManager();switchScreen('status-bar-manager-screen');}

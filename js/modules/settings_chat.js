@@ -15,6 +15,12 @@ function setupChatSettings() {
     if (typeof injectChatSettingsHtml === 'function') {
         injectChatSettingsHtml();
     }
+    const randomStatusEnabled = document.getElementById('setting-status-random-enabled');
+    if (randomStatusEnabled) {
+        randomStatusEnabled.addEventListener('change', () => {
+            document.getElementById('setting-status-random-options').hidden = !randomStatusEnabled.checked;
+        });
+    }
 
     const themeSelect = document.getElementById('setting-theme-color');
     themeSelect.innerHTML = '';
@@ -549,6 +555,12 @@ function loadSettingsToSidebar() {
         document.getElementById('setting-status-regex').value = sp.regexPattern || '';
         document.getElementById('setting-status-replace').value = sp.replacePattern || '';
         document.getElementById('setting-status-history-limit').value = sp.historyLimit !== undefined ? sp.historyLimit : 3;
+        const randomStatusCheckbox = document.getElementById('setting-status-random-enabled');
+        randomStatusCheckbox.checked = sp.randomEnabled === true;
+        randomStatusCheckbox.dispatchEvent(new Event('change'));
+        if (typeof populateRandomStatusPresetSelect === 'function') {
+            populateRandomStatusPresetSelect(sp.randomPresetIds || []);
+        }
         
         // Trigger change to update card UI and panel
         statusCheckbox.dispatchEvent(new Event('change'));
@@ -564,6 +576,10 @@ function loadSettingsToSidebar() {
         const callCheckbox = document.getElementById('setting-video-call-enabled');
         callCheckbox.checked = e.videoCallEnabled || false;
         callCheckbox.dispatchEvent(new Event('change'));
+
+        const callImageCheckbox = document.getElementById('setting-video-call-image-enabled');
+        callImageCheckbox.checked = e.videoCallImageEnabled === true;
+        callImageCheckbox.dispatchEvent(new Event('change'));
 
         const smart = window.SmartMessaging.state(e);
         document.getElementById('setting-smart-reply-enabled').checked = smart.enabled;
@@ -880,6 +896,10 @@ async function saveSettingsFromSidebar() {
         e.statusPanel.promptSuffix = document.getElementById('setting-status-prompt-suffix').value;
         e.statusPanel.regexPattern = document.getElementById('setting-status-regex').value;
         e.statusPanel.replacePattern = document.getElementById('setting-status-replace').value;
+        e.statusPanel.randomEnabled = document.getElementById('setting-status-random-enabled').checked;
+        e.statusPanel.randomPresetIds = typeof getSelectedRandomStatusPresetIds === 'function'
+            ? getSelectedRandomStatusPresetIds()
+            : (e.statusPanel.randomPresetIds || []);
         const historyLimitInput = parseInt(document.getElementById('setting-status-history-limit').value, 10);
         e.statusPanel.historyLimit = isNaN(historyLimitInput) ? 3 : historyLimitInput;
 
@@ -888,6 +908,7 @@ async function saveSettingsFromSidebar() {
         e.momentsEnabled = document.getElementById('setting-moments-enabled').checked;
 
         e.videoCallEnabled = document.getElementById('setting-video-call-enabled').checked;
+        e.videoCallImageEnabled = document.getElementById('setting-video-call-image-enabled').checked;
 
         if (!e.autoReply) e.autoReply = {};
         e.autoReply.enabled = document.getElementById('setting-auto-reply-enabled').checked;

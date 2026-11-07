@@ -139,9 +139,25 @@ async function getAiReply(chatId, chatType, isBackground = false, replyOptions =
         messageArea.scrollTop = messageArea.scrollHeight;
     }
 
-        let systemPrompt, requestBody;
+        let systemPrompt, requestBody, promptChat = chat;
+        if (chatType === 'private' && !replyOptions.musicOnly && chat.statusPanel?.enabled && chat.statusPanel.randomEnabled) {
+            const selectedIds = Array.isArray(chat.statusPanel.randomPresetIds) ? chat.statusPanel.randomPresetIds : [];
+            const presets = (db.statusBarPresets || []).filter(preset =>
+                preset.type !== 'folder' && selectedIds.includes(preset.id)
+            );
+            if (presets.length) {
+                const preset = presets[Math.floor(Math.random() * presets.length)];
+                replyOptions.statusPanelOverride = {
+                    ...chat.statusPanel,
+                    promptSuffix: preset.promptSuffix || '',
+                    regexPattern: preset.regexPattern || '',
+                    replacePattern: preset.replacePattern || ''
+                };
+                promptChat = { ...chat, statusPanel: replyOptions.statusPanelOverride };
+            }
+        }
         if (chatType === 'private') {
-            systemPrompt = replyOptions.musicOnly ? window.UwUMusicAuto.prompt(chat) : generatePrivateSystemPrompt(chat);
+            systemPrompt = replyOptions.musicOnly ? window.UwUMusicAuto.prompt(chat) : generatePrivateSystemPrompt(promptChat);
             if(window.UwUMusicHost){
                 replyOptions.musicContext=window.UwUMusicHost.prepareContext?await window.UwUMusicHost.prepareContext(chat,requestController.signal):window.UwUMusicHost.context(chat);replyOptions.musicContext.signal=requestController.signal;systemPrompt+=replyOptions.musicContext.prompt;
                 const lyrics=!replyOptions.musicOnly&&await window.UwUMusicHost.lyricContext?.(chat,requestController.signal,{background:isBackground,kind:replyOptions.kind});if(lyrics)systemPrompt+=lyrics.prompt;
@@ -1042,9 +1058,10 @@ async function handleAiReplyContent(fullResponse, chat, targetChatId, targetChat
 
             if (targetChatType === 'private') {
                 const char = db.characters.find(c => c.id === targetChatId);
-                if (char && char.statusPanel && char.statusPanel.enabled && char.statusPanel.regexPattern) {
+                const statusPanel = replyOptions.statusPanelOverride || char?.statusPanel;
+                if (char && statusPanel && statusPanel.enabled && statusPanel.regexPattern) {
                     try {
-                        let pattern = char.statusPanel.regexPattern;
+                        let pattern = statusPanel.regexPattern;
                         let flags = 'gs'; 
 
                         const matchParts = pattern.match(/^\/(.*?)\/([a-z]*)$/);
@@ -1060,7 +1077,7 @@ async function handleAiReplyContent(fullResponse, chat, targetChatId, targetChat
                     if (match) {
                         const rawStatus = match[0];
                         
-                        let html = char.statusPanel.replacePattern;
+                        let html = statusPanel.replacePattern || '';
                         
                             // 使用正则一次性查找模板中的 $数字 并替换
     html = html.replace(/\$(\d+)/g, (fullMatch, groupIndex) => {
@@ -1092,7 +1109,7 @@ async function handleAiReplyContent(fullResponse, chat, targetChatId, targetChat
                         item.isStatusUpdate = true;
                         item.statusSnapshot = {
                             regex: pattern,
-                            replacePattern: char.statusPanel.replacePattern
+                            replacePattern: statusPanel.replacePattern
                         };
                         }
                     } catch (e) {

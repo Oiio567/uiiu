@@ -99,6 +99,15 @@ const groupSettingsHtml = `
                             </div>
                         </div>
                         <div class="kkt-item">
+                            <div class="kkt-item-label">视频通话生图</div>
+                            <div class="kkt-item-control">
+                                <label class="kkt-switch">
+                                    <input type="checkbox" id="setting-group-video-call-image-enabled">
+                                    <span class="kkt-slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="kkt-item">
                             <div class="kkt-item-label">双语聊天模式</div>
                             <div class="kkt-item-control">
                                 <label class="kkt-switch">

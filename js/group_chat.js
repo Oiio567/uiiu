@@ -1005,6 +1005,7 @@ function loadGroupSettingsToSidebar() {
     document.getElementById('setting-group-show-timestamp').checked = group.showTimestamp || false;
     document.getElementById('setting-group-timestamp-style').value = group.timestampStyle || 'bubble';
     document.getElementById('setting-group-allow-gossip').checked = group.allowGossip || false;
+    document.getElementById('setting-group-video-call-image-enabled').checked = group.videoCallImageEnabled === true;
 
     // 专属模型
     const groupExclusiveApiSwitch = document.getElementById('setting-group-exclusive-api-enabled');
@@ -1207,6 +1208,7 @@ async function saveGroupSettingsFromSidebar(showToastFlag = true) {
 
     group.showTimestamp = document.getElementById('setting-group-show-timestamp').checked;
     group.timestampStyle = document.getElementById('setting-group-timestamp-style').value;
+    group.videoCallImageEnabled = document.getElementById('setting-group-video-call-image-enabled').checked;
     
     const oldAllowGossip = group.allowGossip || false;
     const newAllowGossip = document.getElementById('setting-group-allow-gossip').checked;

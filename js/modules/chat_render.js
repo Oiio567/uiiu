@@ -107,6 +107,9 @@ function renderMessages(isLoadMore = false, forceScrollToBottom = false) {
 
         const bubble = createMessageBubbleElement(msg, isContinuous);
         if (bubble) {
+            if (isInMultiSelectMode && selectedMessageIds.has(String(msg.id))) {
+                bubble.classList.add('multi-select-selected');
+            }
             if (isLoadMore && msg.isThinking && db.inlineThinkingEnabled) {
                 messageArea.querySelectorAll('.thinking-toggle-wrapper').forEach(existing => {
                     if (existing.dataset.id === String(msg.id)) existing.remove();
@@ -522,7 +525,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
     const sentStickerRegex = /\[(?:.+?)发送的表情包[：:](.+?)\]/i;
     const receivedStickerRegex = /\[(?:.*?的)?表情包[：:](.+?)\]/i;
     
-    const voiceRegex = /\[(?:.+?)的语音[：:]([\s\S]+?)\]/;
+    const voiceRegex = /\[(.+?)的语音[：:]([\s\S]+?)\]/;
     const photoVideoRegex = /\[(?:.+?)发来的照片\/视频[：:]([\s\S]+?)\]/;
     const privateSentTransferRegex = /\[.*?给你转账[：:]([\d.,]+)元[；;]备注[：:](.*?)\]/;
     const privateReceivedTransferRegex = /\[.*?的转账[：:]([\d.,]+)元[；;]备注[：:](.*?)\]/;
@@ -899,11 +902,29 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
             bubbleElement.style.backgroundColor = bubbleTheme.bg;
             bubbleElement.style.color = bubbleTheme.text;
         }
-        bubbleElement.innerHTML = `<svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg><span class="duration">${calculateVoiceDuration(voiceMatch[1].trim())}"</span>`;
+        bubbleElement.innerHTML = `<svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg><span class="duration">${calculateVoiceDuration(voiceMatch[2].trim())}"</span>`;
         const transcriptDiv = document.createElement('div');
         transcriptDiv.className = 'voice-transcript';
-        transcriptDiv.textContent = voiceMatch[1].trim();
+        transcriptDiv.textContent = voiceMatch[2].trim();
         wrapper.appendChild(transcriptDiv);
+        if (!isSent) {
+            bubbleElement.title = '单击生成并播放，双击展开文字';
+            let voiceClickTimer;
+            bubbleElement.addEventListener('click', () => {
+                clearTimeout(voiceClickTimer);
+                voiceClickTimer = setTimeout(() => {
+                    window.FishAudioVoice?.playText(chat, null, voiceMatch[2].trim(), {
+                        senderId,
+                        senderName: voiceMatch[1].trim()
+                    }).catch(error => showToast(error.message || '语音播放失败'));
+                }, 350);
+            });
+            bubbleElement.addEventListener('dblclick', event => {
+                clearTimeout(voiceClickTimer);
+                transcriptDiv.classList.toggle('active');
+                event.preventDefault();
+            });
+        }
     } else if (photoVideoMatch) {
         const pvContent = photoVideoMatch[1].trim();
         let isRealPhoto = false;

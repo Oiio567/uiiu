@@ -1430,6 +1430,66 @@
 /* 聊天输入框区域 */
 .chat-input-wrapper {
     flex-shrink: 0;
+    position: relative;
+}
+
+.sticker-suggestions {
+    position: absolute;
+    z-index: 20;
+    right: 12px;
+    bottom: calc(100% + 6px);
+    left: 12px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    gap: 8px;
+    max-height: 184px;
+    overflow-y: auto;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.sticker-suggestions[hidden] {
+    display: none;
+}
+
+.sticker-suggestion {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 6px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: #555;
+    font: inherit;
+    cursor: pointer;
+}
+
+.sticker-suggestion.active,
+.sticker-suggestion:hover {
+    border-color: rgba(112, 160, 194, 0.35);
+    background: rgba(207, 228, 243, 0.55);
+}
+
+.sticker-suggestion img {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+}
+
+.sticker-suggestion span {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .message-input-area {

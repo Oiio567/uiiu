@@ -1,8 +1,10 @@
 // --- 消息操作模块 (编辑、撤回、多选、截图、历史记录管理) ---
 
-let currentMultiSelectMode = 'delete'; // 'delete' or 'capture'
+let currentMultiSelectMode = 'delete'; // 'delete', 'delete-range', or 'capture'
 let isAddingMessageMode = false;
 let addingAfterMessageId = null;
+let rangeSelectionStartId = null;
+let rangeSelectionEndId = null;
 
 function handleMessageLongPress(messageWrapper, x, y) {
     if (isInMultiSelectMode) return;
@@ -66,6 +68,7 @@ function handleMessageLongPress(messageWrapper, x, y) {
     if(isDebugMode&&window.UwUSwipeReply)menuItems.push({label:'复制左滑诊断',action:()=>window.UwUSwipeReply.copy()});
 
     menuItems.push({label: '删除', action: () => enterMultiSelectMode(messageId)});
+    menuItems.push({label: '连续删除（从此条开始）', action: () => enterMultiSelectMode(messageId, 'delete-range')});
     menuItems.push({label: '从这里创建分支', action: () => createBranchArchiveAtMessage(messageId)});
 
     if (menuItems.length > 0) {
@@ -522,6 +525,8 @@ function cancelMessageEdit() {
 function enterMultiSelectMode(initialMessageId, mode = 'delete') {
     isInMultiSelectMode = true;
     currentMultiSelectMode = mode;
+    rangeSelectionStartId = mode === 'delete-range' ? initialMessageId : null;
+    rangeSelectionEndId = null;
     
     chatRoomHeaderDefault.style.display = 'none';
     chatRoomHeaderSelect.style.display = 'flex';
@@ -530,6 +535,11 @@ function enterMultiSelectMode(initialMessageId, mode = 'delete') {
     if (mode === 'delete') {
         multiSelectBar.classList.add('visible');
         document.getElementById('multi-select-title').textContent = '选择消息';
+        deleteSelectedBtn.textContent = '删除已选';
+    } else if (mode === 'delete-range') {
+        multiSelectBar.classList.add('visible');
+        document.getElementById('multi-select-title').textContent = '选择连续删除范围';
+        deleteSelectedBtn.textContent = '删除连续范围';
     } else if (mode === 'capture') {
         document.getElementById('capture-mode-bar').classList.add('visible');
         document.getElementById('multi-select-title').textContent = '选择截图范围';
@@ -540,6 +550,7 @@ function enterMultiSelectMode(initialMessageId, mode = 'delete') {
     if (initialMessageId) {
         toggleMessageSelection(initialMessageId);
     }
+    if (mode === 'delete-range') updateRangeSelectionStatus();
 }
 
 function exitMultiSelectMode() {
@@ -558,6 +569,10 @@ function exitMultiSelectMode() {
     });
     selectedMessageIds.clear();
     currentMultiSelectMode = 'delete';
+    rangeSelectionStartId = null;
+    rangeSelectionEndId = null;
+    deleteSelectedBtn.textContent = '删除已选';
+    deleteSelectedBtn.disabled = true;
 }
 
 function toggleMessageSelection(messageId) {
@@ -574,11 +589,51 @@ function toggleMessageSelection(messageId) {
     if (currentMultiSelectMode === 'delete') {
         selectCount.textContent = `已选择 ${selectedMessageIds.size} 项`;
         deleteSelectedBtn.disabled = selectedMessageIds.size === 0;
+    } else if (currentMultiSelectMode === 'delete-range') {
+        updateRangeSelectionStatus();
     } else if (currentMultiSelectMode === 'capture') {
         document.getElementById('capture-select-count').textContent = `已选择 ${selectedMessageIds.size} 项`;
         // 截图模式下，即使没选也可以生成（虽然没意义，但保持逻辑简单），或者禁用
         // document.getElementById('generate-capture-btn').disabled = selectedMessageIds.size === 0;
     }
+}
+
+function updateRangeSelectionStatus() {
+    if (rangeSelectionEndId === null) {
+        selectCount.textContent = '起点已选，请点击终点';
+        deleteSelectedBtn.disabled = true;
+        return;
+    }
+
+    selectCount.textContent = `已选择 ${selectedMessageIds.size} 条连续消息`;
+    deleteSelectedBtn.disabled = selectedMessageIds.size === 0;
+}
+
+function selectMessageRangeEnd(messageId) {
+    const chat = (currentChatType === 'private')
+        ? db.characters.find(c => c.id === currentChatId)
+        : db.groups.find(g => g.id === currentChatId);
+    if (!chat || !chat.history) return;
+
+    const startIndex = chat.history.findIndex(message => String(message.id) === String(rangeSelectionStartId));
+    const endIndex = chat.history.findIndex(message => String(message.id) === String(messageId));
+    if (startIndex === -1 || endIndex === -1) {
+        showToast('找不到范围消息，请取消后重新选择');
+        return;
+    }
+
+    rangeSelectionEndId = messageId;
+    selectedMessageIds.clear();
+    const firstIndex = Math.min(startIndex, endIndex);
+    const lastIndex = Math.max(startIndex, endIndex);
+    chat.history.slice(firstIndex, lastIndex + 1).forEach(message => {
+        selectedMessageIds.add(String(message.id));
+    });
+
+    messageArea.querySelectorAll('.message-wrapper[data-id]').forEach(element => {
+        element.classList.toggle('multi-select-selected', selectedMessageIds.has(element.dataset.id));
+    });
+    updateRangeSelectionStatus();
 }
 
 async function generateCapture() {
@@ -681,10 +736,16 @@ async function generateCapture() {
 
 async function deleteSelectedMessages() {
     if (selectedMessageIds.size === 0) return;
-    const deletedCount = selectedMessageIds.size;
     const chat = (currentChatType === 'private') ? db.characters.find(c => c.id === currentChatId) : db.groups.find(g => g.id === currentChatId);
-    if(chat.history.length&&chat.history.every(m=>selectedMessageIds.has(m.id)))window.JournalAutomation?.clearHistory(chat);
-    chat.history = chat.history.filter(m => !selectedMessageIds.has(m.id));
+    if (!chat || !chat.history) return;
+    const deletedCount = chat.history.filter(message => selectedMessageIds.has(String(message.id))).length;
+    if (currentMultiSelectMode === 'delete-range') {
+        if (rangeSelectionEndId === null) return;
+        if (!confirm(`确定要删除连续范围内的 ${deletedCount} 条消息吗？此操作不可恢复。`)) return;
+    }
+    if (deletedCount === 0) return;
+    if(chat.history.length&&chat.history.every(m=>selectedMessageIds.has(String(m.id))))window.JournalAutomation?.clearHistory(chat);
+    chat.history = chat.history.filter(m => !selectedMessageIds.has(String(m.id)));
     window.UwUMusicHost?.historyChanged(chat);
 
     if (currentChatType === 'private') {

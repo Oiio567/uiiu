@@ -1,0 +1,257 @@
+#voice-workshop-screen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: #f5f5f5;
+}
+
+#voice-workshop-screen .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#voice-workshop-screen .voice-workshop-header .workshop-tabs {
+    flex: 1;
+    justify-content: center;
+}
+
+#voice-workshop-screen .voice-workshop-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.voice-workshop-tab-content {
+    display: none;
+}
+
+.voice-workshop-tab-content.active {
+    display: block;
+}
+
+.voice-workshop-card {
+    margin-bottom: 14px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, 0.05);
+}
+
+.voice-workshop-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.voice-workshop-heading-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(0, 123, 255, 0.1);
+    color: var(--primary-color, #007bff);
+    font-size: 24px;
+}
+
+.voice-workshop-heading h2 {
+    margin: 0 0 4px;
+    color: #242424;
+    font-size: 16px;
+}
+
+.voice-workshop-heading p,
+.voice-workshop-hint {
+    margin: 0;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.voice-workshop-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.voice-workshop-field small {
+    color: #999;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.voice-workshop-field input,
+.voice-workshop-field select {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #e8e8e8;
+    border-radius: 10px;
+    outline: none;
+    padding: 11px 12px;
+    background: #fafafa;
+    color: #333;
+    font: inherit;
+    font-size: 14px;
+}
+
+.voice-workshop-field input:focus {
+    border-color: var(--primary-color, #007bff);
+    background: #fff;
+}
+
+.voice-workshop-hint {
+    margin: -4px 0 15px;
+}
+
+.voice-workshop-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 18px 0;
+    cursor: pointer;
+}
+
+.voice-workshop-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.voice-workshop-toggle-track {
+    position: relative;
+    flex: 0 0 42px;
+    height: 24px;
+    border-radius: 999px;
+    background: #d7dbe0;
+    transition: background 0.2s ease;
+}
+
+.voice-workshop-toggle-track::after {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    content: '';
+    transition: transform 0.2s ease;
+}
+
+.voice-workshop-toggle input:checked + .voice-workshop-toggle-track {
+    background: var(--primary-color, #007bff);
+}
+
+.voice-workshop-toggle input:checked + .voice-workshop-toggle-track::after {
+    transform: translateX(18px);
+}
+
+.voice-workshop-toggle input:focus-visible + .voice-workshop-toggle-track {
+    outline: 2px solid var(--primary-color, #007bff);
+    outline-offset: 2px;
+}
+
+.voice-workshop-toggle-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.voice-workshop-toggle-copy strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.voice-workshop-toggle-copy small {
+    color: #888;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.voice-workshop-primary,
+.voice-workshop-secondary {
+    display: inline-flex;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 0;
+    border-radius: 10px;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.voice-workshop-primary {
+    width: 100%;
+    background: var(--primary-color, #007bff);
+    color: #fff;
+}
+
+.voice-workshop-primary:disabled {
+    opacity: 0.65;
+    cursor: wait;
+}
+
+.voice-workshop-secondary {
+    background: #f2f4f7;
+    color: #444;
+}
+
+.voice-workshop-status {
+    min-height: 18px;
+    margin: 12px 0 0;
+    color: #777;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.voice-workshop-char-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.voice-workshop-char-card {
+    padding: 14px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.voice-workshop-char-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.voice-workshop-char-heading img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f2f4f7;
+    object-fit: cover;
+}
+
+.voice-workshop-char-heading strong {
+    color: #333;
+    font-size: 14px;
+}
+
+.voice-workshop-char-card .voice-workshop-field {
+    margin-bottom: 0;
+}

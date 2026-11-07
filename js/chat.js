@@ -280,17 +280,13 @@ function setupChatRoom() {
         } else if (isInMultiSelectMode) {
             const messageWrapper = e.target.closest('.message-wrapper');
             if (messageWrapper) {
-                toggleMessageSelection(messageWrapper.dataset.id);
-            }
-        } else {
-            const voiceBubble = e.target.closest('.voice-bubble');
-            if (voiceBubble) {
-                const transcript = voiceBubble.closest('.message-wrapper').querySelector('.voice-transcript');
-                if (transcript) {
-                    transcript.classList.toggle('active');
+                if (currentMultiSelectMode === 'delete-range') {
+                    selectMessageRangeEnd(messageWrapper.dataset.id);
+                } else {
+                    toggleMessageSelection(messageWrapper.dataset.id);
                 }
             }
-            
+        } else {
             const bilingualBubble = e.target.closest('.bilingual-bubble');
             if (bilingualBubble) {
                 const translationText = bilingualBubble.closest('.message-wrapper').querySelector('.translation-text');
@@ -325,7 +321,7 @@ function setupChatRoom() {
             }
         }
     });
-    
+
     messageArea.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         if (e.target.id === 'load-more-btn' || isInMultiSelectMode) return;

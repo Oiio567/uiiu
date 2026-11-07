@@ -200,6 +200,39 @@
     z-index: 20050;
 }
 
+.vc-call-background-image[hidden],
+.vc-call-save-image-btn[hidden] { display: none; }
+.vc-call-background-image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: brightness(0.65);
+}
+.vc-call-header,
+.vc-chat-area,
+.vc-controls-wrapper { position: relative; z-index: 1; }
+.vc-call-save-image-btn {
+    position: absolute;
+    top: calc(12px + env(safe-area-inset-top));
+    right: 16px;
+    z-index: 20;
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.28);
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(0,0,0,0.42);
+    backdrop-filter: blur(8px);
+    cursor: pointer;
+}
+.vc-call-save-image-btn:active { transform: scale(0.94); }
+
 .vc-call-header {
     height: auto;
     min-height: 140px;
@@ -257,14 +290,19 @@
 .vc-msg-row.ai { align-self: flex-start; text-align: left; }
 .vc-msg-row.user { align-self: flex-end; text-align: right; align-items: flex-end; }
 
+.vc-call-image-btn[hidden] { display: none; }
+.vc-controls.has-call-image { gap: 20px; }
+.vc-call-image-btn:disabled { opacity: 0.55; cursor: wait; }
+
 .vc-text-visual {
     font-family: var(--vc-font-serif); font-size: 13px; line-height: 1.5; margin-bottom: 4px; font-style: italic;
 }
 .vc-text-visual.ai { color: var(--vc-ai-color); }
 .vc-text-visual.user { color: #9e998e; }
 
-.vc-text-voice { font-size: 15px; line-height: 1.5; font-weight: 300; }
-.vc-text-voice.ai { color: var(--vc-ai-voice); text-shadow: 0 0 8px rgba(255,255,255,0.15); }
+.vc-text-voice { max-height: 1.5em; overflow: hidden; font-size: 15px; line-height: 1.5; font-weight: 300; }
+.vc-text-voice.expanded { max-height: none; }
+.vc-text-voice.ai { color: var(--vc-ai-voice); text-shadow: 0 0 8px rgba(255,255,255,0.15); cursor: pointer; }
 .vc-text-voice.user { color: var(--vc-user-voice); }
 
 .vc-deco-line { width: 1px; height: 10px; margin-bottom: 5px; opacity: 0.4; background: currentColor; }

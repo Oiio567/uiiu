@@ -246,6 +246,20 @@ const chatSettingsHtml = `
                                     </div>
                                 </div>
 
+                                <div class="feature-card" data-feature="video-call-image">
+                                    <div class="feature-card-header">
+                                        <div class="feature-card-icon">✦</div>
+                                        <label class="kkt-switch">
+                                            <input type="checkbox" id="setting-video-call-image-enabled">
+                                            <span class="kkt-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="feature-card-body">
+                                        <div class="feature-card-title">视频通话生图</div>
+                                        <div class="feature-card-desc">根据通话画面描述生成图片（需配置绘图工坊）</div>
+                                    </div>
+                                </div>
+
                                 <!-- 角色状态栏 -->
                                 <div class="feature-card" data-feature="status">
                                     <div class="feature-card-header">
@@ -328,6 +342,22 @@ const chatSettingsHtml = `
                                             <div style="display:flex; gap:5px; align-items:center;">
                                                 <button type="button" id="setting-status-preset-select" class="sb-folder-settings-select">选择状态栏 ›</button>
                                                 <button type="button" id="quick-save-status-preset-btn" class="btn btn-small" style="padding: 6px 12px; white-space: nowrap;">存</button>
+                                            </div>
+                                        </div>
+                                        <div class="status-random-setting">
+                                            <div class="status-random-setting-head">
+                                                <div>
+                                                    <div class="kkt-item-label">随机生成状态栏</div>
+                                                    <div class="status-random-setting-desc">每次回复从已选预设中本地随机抽取，不额外调用 API</div>
+                                                </div>
+                                                <label class="kkt-switch">
+                                                    <input type="checkbox" id="setting-status-random-enabled">
+                                                    <span class="kkt-slider"></span>
+                                                </label>
+                                            </div>
+                                            <div id="setting-status-random-options" hidden>
+                                                <button type="button" id="setting-status-random-select" class="sb-folder-settings-select">选择随机状态栏 ›</button>
+                                                <div class="status-random-setting-desc">可进入不同文件夹勾选多个预设；未选预设时使用上方指定配置</div>
                                             </div>
                                         </div>
                                         <div class="kkt-item-label" style="margin-bottom:8px;">状态栏格式要求 (Prompt Suffix)</div>

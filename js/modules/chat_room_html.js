@@ -49,6 +49,7 @@ const chatRoomHtml = `
         </div>
 
         <div class="chat-input-wrapper">
+            <div id="sticker-suggestions" class="sticker-suggestions" role="listbox" aria-label="表情包联想" hidden></div>
             <div id="reply-preview-bar">
                 <div class="reply-preview-content">
                     <span class="reply-preview-name"></span>

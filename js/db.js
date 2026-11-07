@@ -180,7 +180,7 @@ const globalSettingKeys = [
     'inlineThinkingEnabled', 'statusThinkingEnabled', 'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
     'globalSendSound', 'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets',
     'cotSettings', 'cotPresets', 'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint',
-    'workshopSettings', 'workshopLlmPresets', 'workshopPromptPresets', 'homeLayoutOrder',
+    'workshopSettings', 'workshopLlmPresets', 'workshopPromptPresets', 'voiceWorkshopSettings', 'homeLayoutOrder',
     'homeLayoutPages', 'widgetTemplates', 'addedWidgets', 'backupReminderSettings',
     'stUnlocked'
 ];
@@ -342,6 +342,13 @@ var db = {
         gptLlmApiPresetId: '',
         boundCharacters: []
     },
+    voiceWorkshopSettings: {
+        apiKey: '',
+        model: 's1',
+        proxyUrl: '',
+        autoPlay: false,
+        characterVoices: {}
+    },
     workshopLlmPresets: [],
     workshopPromptPresets: [],
     widgetTemplates: [],
@@ -483,6 +490,7 @@ function initDatabase() {
                 width: 832, height: 1216, cfgScale: 5.0, rateLimit: 45,
                 positivePrompt: '', characterPrompt: '', negativePrompt: '', llmIndependentApi: false, llmApiPresetId: '', gptLlmIndependentApi: false, gptLlmApiPresetId: '', boundCharacters: []
             },
+            voiceWorkshopSettings: data.voiceWorkshopSettings || { apiKey: '', model: 's1', proxyUrl: '', autoPlay: false, characterVoices: {} },
             workshopLlmPresets: [],
             workshopPromptPresets: [],
             homeLayoutOrder: ['widget-top', 'widget-ins', 'app-chat', 'app-api', 'app-wallpaper', 'app-worldbook', 'app-customize', 'app-tutorial', 'app-reader', 'widget-heart', 'app-placeholder'],
@@ -589,6 +597,7 @@ const loadData = async () => {
                 width: 832, height: 1216, cfgScale: 5.0, rateLimit: 45,
                 positivePrompt: '', characterPrompt: '', negativePrompt: '', llmIndependentApi: false, llmApiPresetId: '', gptLlmIndependentApi: false, gptLlmApiPresetId: '', boundCharacters: []
             },
+            voiceWorkshopSettings: { apiKey: '', model: 's1', proxyUrl: '', autoPlay: false, characterVoices: {} },
             workshopLlmPresets: [],
             workshopPromptPresets: [],
             homeLayoutOrder: ['widget-top', 'widget-ins', 'app-chat', 'app-api', 'app-wallpaper', 'app-worldbook', 'app-customize', 'app-tutorial', 'app-reader', 'widget-heart', 'app-placeholder'],
