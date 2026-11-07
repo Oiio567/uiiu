@@ -286,22 +286,22 @@
     -webkit-touch-callout: none;
 }
 
-.vc-msg-row { display: flex; flex-direction: column; max-width: 85%; opacity: 0; animation: vc-slideUp 0.5s forwards; }
+.vc-msg-row { display: flex; flex-direction: column; min-width: 0; max-width: 85%; overflow-wrap: anywhere; opacity: 0; animation: vc-slideUp 0.5s forwards; }
 .vc-msg-row.ai { align-self: flex-start; text-align: left; }
 .vc-msg-row.user { align-self: flex-end; text-align: right; align-items: flex-end; }
 
 .vc-call-image-btn[hidden] { display: none; }
-.vc-controls.has-call-image { gap: 20px; }
+.vc-controls.has-call-image { gap: clamp(8px, 2.5vw, 20px); }
 .vc-call-image-btn:disabled { opacity: 0.55; cursor: wait; }
 
 .vc-text-visual {
+    max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere;
     font-family: var(--vc-font-serif); font-size: 13px; line-height: 1.5; margin-bottom: 4px; font-style: italic;
 }
 .vc-text-visual.ai { color: var(--vc-ai-color); }
 .vc-text-visual.user { color: #9e998e; }
 
-.vc-text-voice { max-height: 1.5em; overflow: hidden; font-size: 15px; line-height: 1.5; font-weight: 300; }
-.vc-text-voice.expanded { max-height: none; }
+.vc-text-voice { max-width: 100%; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 15px; line-height: 1.5; font-weight: 300; }
 .vc-text-voice.ai { color: var(--vc-ai-voice); text-shadow: 0 0 8px rgba(255,255,255,0.15); cursor: pointer; }
 .vc-text-voice.user { color: var(--vc-user-voice); }
 
@@ -319,6 +319,35 @@
     display: flex; flex-direction: column; align-items: center;
     background: none; border: none; cursor: pointer;
     padding: 0;
+}
+
+@media (max-width: 480px) {
+    .vc-controls-wrapper {
+        box-sizing: border-box;
+        width: 100%;
+        padding: 16px 12px calc(24px + env(safe-area-inset-bottom));
+    }
+
+    .vc-controls.has-call-image {
+        box-sizing: border-box;
+        width: 100%;
+        gap: clamp(6px, 2vw, 12px);
+    }
+
+    .vc-controls.has-call-image > .vc-c-btn {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+
+    .vc-controls.has-call-image .vc-c-icon-box {
+        width: clamp(44px, 14vw, 56px);
+        height: clamp(44px, 14vw, 56px);
+    }
+
+    .vc-controls.has-call-image .vc-c-label {
+        white-space: nowrap;
+        font-size: 9px;
+    }
 }
 .vc-c-icon-box {
     width: 56px; height: 56px; border-radius: 50%;

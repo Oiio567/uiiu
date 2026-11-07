@@ -790,7 +790,7 @@ const VideoCallModule = {
         if (who === 'ai' && type === 'voice' && window.FishAudioVoice) {
             const voiceBubble = msgDiv.querySelector('.vc-text-voice');
             if (voiceBubble) {
-                voiceBubble.title = '单击生成并播放，双击展开文字';
+                voiceBubble.title = '单击生成并播放；文字始终完整显示';
                 let voiceClickTimer;
                 voiceBubble.addEventListener('click', () => {
                     clearTimeout(voiceClickTimer);
@@ -798,11 +798,6 @@ const VideoCallModule = {
                         window.FishAudioVoice.playText(this.state.currentChat, null, content)
                             .catch(error => showToast(error.message || '语音播放失败'));
                     }, 260);
-                });
-                voiceBubble.addEventListener('dblclick', event => {
-                    clearTimeout(voiceClickTimer);
-                    voiceBubble.classList.toggle('expanded');
-                    event.preventDefault();
                 });
             }
 
