@@ -114,7 +114,7 @@ const init = async () => {
     setupGiftSystem();
     setupTimeSkipSystem();
     setupGalleryManagement();
-    try { setupCommunityModule(); } catch(e) { console.error("setupCommunityModule failed:", e); }
+    try { setupOfflineMeet(); } catch(e) { console.error("setupOfflineMeet failed:", e); }
     
     // 错误处理包裹的模块初始化
     try { setupWorldBookApp(); } catch(e) { console.error("setupWorldBookApp failed:", e); }

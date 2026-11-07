@@ -3,7 +3,7 @@ function injectWorkshopHTML() {
 <!-- Drawing Workshop Screen -->
 <div id="drawing-workshop-screen" class="screen">
     <header class="app-header">
-        <button class="back-btn" data-target="home-screen">‹</button>
+        <button class="back-btn" data-target="more-screen">‹</button>
         <div class="workshop-tabs" style="display: flex; gap: 10px; flex: 1; justify-content: center;">
             <button class="workshop-tab active" id="workshop-api-tab-btn" style="background: none; border: none; font-size: 16px; font-weight: bold; color: var(--primary-color); padding: 5px 10px; border-bottom: 2px solid var(--primary-color);">未配置</button>
             <button class="workshop-tab" id="workshop-char-tab-btn" style="background: none; border: none; font-size: 16px; font-weight: bold; color: #999; padding: 5px 10px; border-bottom: 2px solid transparent;">角色管理</button>

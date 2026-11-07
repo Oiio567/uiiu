@@ -131,7 +131,7 @@ async function receiveAirDropPhoto(messageId, isAuto = false) {
     }
 }
 
-async function generateTagsFromDescription(chat, messageId) {
+async function generateTagsFromDescription(chat, messageId, options = {}) {
     const apiConfig = resolveWorkshopLlmApiConfig();
 
     let {url, key, model, provider} = apiConfig;
@@ -259,6 +259,13 @@ async function generateTagsFromDescription(chat, messageId) {
         ];
     }
 
+    const additionalInstruction = typeof options.additionalInstruction === 'string'
+        ? options.additionalInstruction.trim()
+        : '';
+    if (additionalInstruction) {
+        messages.push({ role: 'user', content: additionalInstruction });
+    }
+
     console.log('【生图 LLM 预设请求参数】:\n' + messages.map(m => `[${m.role.toUpperCase()}]\n${m.content}`).join('\n\n------------------------\n\n'));
 
     const requestBody = {
@@ -271,7 +278,7 @@ async function generateTagsFromDescription(chat, messageId) {
     };
 
     if (provider === 'gemini') {
-        requestBody.contents = [{role: 'user', parts: [{text: `<参考资料>\n${contextText}\n</参考资料>\n请根据参考资料中最后一条消息的画面描述，结合前文语境，生成英文提示词标签。直接输出转换后的英文标签。`}]}];
+        requestBody.contents = [{role: 'user', parts: [{text: `<参考资料>\n${contextText}\n</参考资料>\n请根据参考资料中最后一条消息的画面描述，结合前文语境，生成英文提示词标签。直接输出转换后的英文标签。${additionalInstruction ? `\n\n${additionalInstruction}` : ''}`}]}];
         requestBody.system_instruction = {parts: [{text: messages[0].content}]}; // Fix: use messages[0].content instead of undefined systemPrompt
         delete requestBody.messages;
     }

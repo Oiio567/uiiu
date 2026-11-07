@@ -94,7 +94,7 @@ async function calculateStorageSize(options = {}) {
         'customIcons', 'insWidgetSettings', 'homeWidgetSettings', 'chatFolders', 
         'fontSizeScale', 'savedKeyboardHeight', 'statusBarPresets', 'globalSendSound', 
         'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 
-        'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings',
+        'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings', 'offlineMeetPromptPresets', 'activeOfflineMeetPromptPresetId', 'offlineMeetWorldBookIds', 'offlineMeetArchives', 'offlineMeetImageEnabled', 'offlineMeetImageCount', 'offlineMeetImageMode', 'offlineMeetVoiceEnabled',
         'workshopLlmPresets', 'workshopPromptPresets', 'homeLayoutOrder', 'homeLayoutPages', 
         'widgetTemplates', 'addedWidgets', 'backupReminderSettings', 'stUnlocked'
     ];
@@ -396,7 +396,7 @@ async function handleExport() {
                 'customIcons', 'insWidgetSettings', 'homeWidgetSettings', 'chatFolders', 
                 'fontSizeScale', 'savedKeyboardHeight', 'statusBarPresets', 'globalSendSound', 
                 'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 
-                'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings',
+                'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings', 'offlineMeetPromptPresets', 'activeOfflineMeetPromptPresetId', 'offlineMeetWorldBookIds', 'offlineMeetArchives', 'offlineMeetImageEnabled', 'offlineMeetImageCount', 'offlineMeetImageMode', 'offlineMeetVoiceEnabled',
                 'workshopLlmPresets', 'workshopPromptPresets', 'homeLayoutOrder', 'homeLayoutPages', 
                 'widgetTemplates', 'addedWidgets', 'backupReminderSettings', 'stUnlocked'
             ];
@@ -582,7 +582,7 @@ async function handleImport(event) {
                     'customIcons', 'insWidgetSettings', 'homeWidgetSettings', 'chatFolders', 
                     'fontSizeScale', 'savedKeyboardHeight', 'statusBarPresets', 'globalSendSound', 
                     'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets', 
-                    'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings',
+                    'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint', 'workshopSettings', 'voiceWorkshopSettings', 'offlineMeetPromptPresets', 'activeOfflineMeetPromptPresetId', 'offlineMeetWorldBookIds', 'offlineMeetArchives', 'offlineMeetImageEnabled', 'offlineMeetImageCount', 'offlineMeetImageMode', 'offlineMeetVoiceEnabled',
                     'workshopLlmPresets', 'workshopPromptPresets', 'homeLayoutOrder', 'homeLayoutPages', 
                     'widgetTemplates', 'addedWidgets', 'backupReminderSettings', 'stUnlocked'
                 ];

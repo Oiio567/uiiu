@@ -85,7 +85,12 @@ function openVoiceWorkshop() {
                                 </div>
                             </div>
                             <p id="voice-workshop-char-empty" class="voice-workshop-hint" hidden>尚未创建聊天角色。</p>
+                            <label class="voice-workshop-search-field">
+                                <span class="sr-only">搜索角色</span>
+                                <input id="voice-workshop-char-search" type="search" placeholder="搜索角色名称…" autocomplete="off">
+                            </label>
                             <div id="voice-workshop-char-list" class="voice-workshop-char-list"></div>
+                            <p id="voice-workshop-char-no-results" class="voice-workshop-search-empty" hidden>没有找到匹配的角色。</p>
                             <button id="voice-workshop-char-save" class="voice-workshop-primary" type="button">保存设置</button>
                         </section>
                     </section>
@@ -98,6 +103,7 @@ function openVoiceWorkshop() {
 
     loadVoiceWorkshopFields(screen);
     renderVoiceWorkshopCharacters(screen);
+    filterVoiceWorkshopCharacters(screen);
     switchVoiceWorkshopTab(screen, 'api');
     switchScreen('voice-workshop-screen');
 }
@@ -121,9 +127,11 @@ function switchVoiceWorkshopTab(screen, tabName) {
 function renderVoiceWorkshopCharacters(screen) {
     const list = screen.querySelector('#voice-workshop-char-list');
     const empty = screen.querySelector('#voice-workshop-char-empty');
+    const noResults = screen.querySelector('#voice-workshop-char-no-results');
     const settings = getVoiceWorkshopSettings();
     list.replaceChildren();
     empty.hidden = db.characters.length > 0;
+    noResults.hidden = true;
 
     for (const character of db.characters) {
         const card = document.createElement('article');
@@ -154,8 +162,26 @@ function renderVoiceWorkshopCharacters(screen) {
         field.append(label, customInput);
         card.append(heading, field);
         card.dataset.characterId = String(character.id);
+        card.dataset.searchText = [character.remarkName, character.realName, character.name]
+            .filter(Boolean)
+            .join(' ')
+            .toLocaleLowerCase();
         list.appendChild(card);
     }
+}
+
+function filterVoiceWorkshopCharacters(screen) {
+    const query = screen.querySelector('#voice-workshop-char-search').value.trim().toLocaleLowerCase();
+    const cards = [...screen.querySelectorAll('.voice-workshop-char-card')];
+    let visibleCount = 0;
+    for (const card of cards) {
+        const matches = !query || card.dataset.searchText.includes(query);
+        card.hidden = !matches;
+        if (matches) visibleCount++;
+    }
+
+    const noResults = screen.querySelector('#voice-workshop-char-no-results');
+    noResults.hidden = !query || visibleCount > 0;
 }
 
 function readVoiceWorkshopFields(screen) {
@@ -183,6 +209,7 @@ async function saveVoiceWorkshopFields(screen) {
 function bindVoiceWorkshop(screen) {
     screen.querySelector('#voice-workshop-api-tab-btn').addEventListener('click', () => switchVoiceWorkshopTab(screen, 'api'));
     screen.querySelector('#voice-workshop-char-tab-btn').addEventListener('click', () => switchVoiceWorkshopTab(screen, 'characters'));
+    screen.querySelector('#voice-workshop-char-search').addEventListener('input', () => filterVoiceWorkshopCharacters(screen));
 
     screen.querySelector('#voice-workshop-save').addEventListener('click', async () => {
         const status = screen.querySelector('#voice-workshop-status');

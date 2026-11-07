@@ -405,7 +405,6 @@ function calculateTokenBreakdown(chatId, chatType = 'private') {
     if (favoritedJournals) {
         memoryText = `【共同回忆】\n这是你需要长期记住的、我们之间发生过的往事背景：\n${favoritedJournals}\n\n`;
     }
-
     // 3. 计算各部分 Token
     breakdown.worldBook = countTextTokens(worldBookText);
     breakdown.charPersona = countTextTokens(charPersonaText);

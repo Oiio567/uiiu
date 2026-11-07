@@ -180,7 +180,7 @@ const globalSettingKeys = [
     'inlineThinkingEnabled', 'statusThinkingEnabled', 'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
     'globalSendSound', 'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets',
     'cotSettings', 'cotPresets', 'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint',
-    'workshopSettings', 'workshopLlmPresets', 'workshopPromptPresets', 'voiceWorkshopSettings', 'homeLayoutOrder',
+    'workshopSettings', 'workshopLlmPresets', 'workshopPromptPresets', 'voiceWorkshopSettings', 'offlineMeetPromptPresets', 'activeOfflineMeetPromptPresetId', 'offlineMeetWorldBookIds', 'offlineMeetArchives', 'offlineMeetImageEnabled', 'offlineMeetImageCount', 'offlineMeetImageMode', 'offlineMeetVoiceEnabled', 'homeLayoutOrder',
     'homeLayoutPages', 'widgetTemplates', 'addedWidgets', 'backupReminderSettings',
     'stUnlocked'
 ];
@@ -349,6 +349,14 @@ var db = {
         autoPlay: false,
         characterVoices: {}
     },
+    offlineMeetPromptPresets: [],
+    activeOfflineMeetPromptPresetId: null,
+    offlineMeetWorldBookIds: [],
+    offlineMeetArchives: [],
+    offlineMeetImageEnabled: false,
+    offlineMeetImageCount: 1,
+    offlineMeetImageMode: 'max',
+    offlineMeetVoiceEnabled: false,
     workshopLlmPresets: [],
     workshopPromptPresets: [],
     widgetTemplates: [],
@@ -491,6 +499,16 @@ function initDatabase() {
                 positivePrompt: '', characterPrompt: '', negativePrompt: '', llmIndependentApi: false, llmApiPresetId: '', gptLlmIndependentApi: false, gptLlmApiPresetId: '', boundCharacters: []
             },
             voiceWorkshopSettings: data.voiceWorkshopSettings || { apiKey: '', model: 's1', proxyUrl: '', autoPlay: false, characterVoices: {} },
+            offlineMeetPromptPresets: data.offlineMeetPromptPresets || [],
+            activeOfflineMeetPromptPresetId: data.activeOfflineMeetPromptPresetId || null,
+            offlineMeetWorldBookIds: data.offlineMeetWorldBookIds || [],
+            offlineMeetArchives: data.offlineMeetArchives || [],
+            offlineMeetImageEnabled: data.offlineMeetImageEnabled === true,
+            offlineMeetImageCount: Number.isSafeInteger(Number(data.offlineMeetImageCount)) && Number(data.offlineMeetImageCount) > 0
+                ? Math.min(Number(data.offlineMeetImageCount), 20)
+                : 1,
+            offlineMeetImageMode: data.offlineMeetImageMode === 'fixed' ? 'fixed' : 'max',
+            offlineMeetVoiceEnabled: data.offlineMeetVoiceEnabled === true,
             workshopLlmPresets: [],
             workshopPromptPresets: [],
             homeLayoutOrder: ['widget-top', 'widget-ins', 'app-chat', 'app-api', 'app-wallpaper', 'app-worldbook', 'app-customize', 'app-tutorial', 'app-reader', 'widget-heart', 'app-placeholder'],
@@ -598,6 +616,14 @@ const loadData = async () => {
                 positivePrompt: '', characterPrompt: '', negativePrompt: '', llmIndependentApi: false, llmApiPresetId: '', gptLlmIndependentApi: false, gptLlmApiPresetId: '', boundCharacters: []
             },
             voiceWorkshopSettings: { apiKey: '', model: 's1', proxyUrl: '', autoPlay: false, characterVoices: {} },
+            offlineMeetPromptPresets: [],
+            activeOfflineMeetPromptPresetId: null,
+            offlineMeetWorldBookIds: [],
+            offlineMeetArchives: [],
+            offlineMeetImageEnabled: false,
+            offlineMeetImageCount: 1,
+            offlineMeetImageMode: 'max',
+            offlineMeetVoiceEnabled: false,
             workshopLlmPresets: [],
             workshopPromptPresets: [],
             homeLayoutOrder: ['widget-top', 'widget-ins', 'app-chat', 'app-api', 'app-wallpaper', 'app-worldbook', 'app-customize', 'app-tutorial', 'app-reader', 'widget-heart', 'app-placeholder'],

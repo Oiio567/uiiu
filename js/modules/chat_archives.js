@@ -2,7 +2,8 @@
 
 const CHAT_ARCHIVE_META_KEYS = new Set([
     'calendarPrefs', 'calendarLedger', 'id', 'archives', 'activeArchiveId', 'isPinned', 'unreadCount',
-    'smartReplyLevel', 'smartInterleaved', 'smartAutoLimit', 'smartAutoUsage', 'realName', 'remarkName', 'name', 'avatar', 'folderId', 'folderIds'
+    'smartReplyLevel', 'smartInterleaved', 'smartAutoLimit', 'smartAutoUsage', 'realName', 'remarkName', 'name', 'avatar', 'folderId', 'folderIds',
+    'offlineMeetMemories'
 ]);
 
 function cloneArchiveValue(value) {

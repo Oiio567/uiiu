@@ -216,6 +216,20 @@ async function getAiReply(chatId, chatType, isBackground = false, replyOptions =
             if (!isBackground) typingIndicator.textContent = `“${chatType === 'private' ? chat.remarkName : chat.name}”正在输入中...`;
         }
 
+        const meetNarrations = historySlice
+            .filter(message => message.offlineMeetNarrationShare?.kind === 'display')
+            .map(message => {
+                const match = typeof message.content === 'string'
+                    ? message.content.match(/^\[system-display:([\s\S]*)\]$/)
+                    : null;
+                return match?.[1]?.trim();
+            })
+            .filter(Boolean);
+        if (meetNarrations.length) {
+            systemPrompt += `\n\n【Meet 剧情旁白】\n${meetNarrations.join('\n')}`;
+            historySlice = historySlice.filter(message => message.offlineMeetNarrationShare?.kind !== 'display');
+        }
+
         // 检查系统提示词中是否包含聊天记录占位符
         const hasHistoryPlaceholder = systemPrompt.includes('【动态插入: 聊天记录】');
         

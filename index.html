@@ -54,7 +54,8 @@
     <link rel="stylesheet" href="css/workshop.css?v=20261028r4">
     <link rel="stylesheet" href="css/modules/voice_workshop.css?v=20261107">
     <link rel="stylesheet" href="css/modules/console.css?v=20261028r4">
-    <link rel="stylesheet" href="css/modules/community.css?v=20261028r4">
+    <link rel="stylesheet" href="css/modules/offline_meet.css?v=20261115">
+    <link rel="stylesheet" href="css/modules/preset_workshop.css?v=20261107">
     <link rel="stylesheet" href="css/modules/reader.css?v=20261028r4">
 
     <!-- Other Styles -->
@@ -168,29 +169,154 @@
     <div id="phone-screen" class="screen">
         <header class="app-header chat-list-header">
             <div class="header-left">
-                <h1 class="title">Community</h1>
+                <h1 class="title">Meet</h1>
                 <button class="back-btn hidden-back-btn" data-target="home-screen">‹</button>
             </div>
             <div class="action-btn-group">
-                <button class="action-btn" title="更多">
+                <button class="action-btn" title="提示词预设">
                     <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 </button>
             </div>
         </header>
-        <main class="community-content">
-            <div class="community-search-layout">
-                <h2 class="community-logo">·&nbsp;&nbsp;UwU&nbsp;&nbsp;·</h2>
-                
-                <div class="community-search-box-wrapper">
-                    <div class="community-search-input-container">
-                        <svg class="community-search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="text" placeholder="搜索" />
+        <main class="offline-meet-content">
+            <section class="offline-meet-card">
+                <div class="offline-meet-heading">
+                    <span class="offline-meet-heading-icon" aria-hidden="true">♡</span>
+                    <div>
+                        <h2>准备一次 Meet</h2>
+                        <p>选择一位或多位角色，一起进入现实场景。</p>
                     </div>
                 </div>
-                
-                <p class="community-recent-search">最近搜索：UwU社区…</p>
-            </div>
+                <div class="offline-meet-section-heading">
+                    <h3>选择见面对象</h3>
+                    <span id="offline-meet-selection-count">已选 0 位</span>
+                </div>
+                <label class="offline-meet-search">
+                    <span class="sr-only">搜索角色</span>
+                    <input id="offline-meet-character-search" type="search" placeholder="搜索角色名称…" autocomplete="off">
+                </label>
+                <div id="offline-meet-characters" class="offline-meet-character-list"></div>
+                <p id="offline-meet-character-empty" class="offline-meet-empty" hidden>还没有聊天角色，请先添加角色。</p>
+                <div class="offline-meet-section-heading">
+                    <h3>绑定世界书</h3>
+                    <span id="offline-meet-worldbook-count">已选 0 条</span>
+                </div>
+                <label class="offline-meet-search">
+                    <span class="sr-only">搜索世界书</span>
+                    <input id="offline-meet-worldbook-search" type="search" placeholder="搜索世界书条目…" autocomplete="off">
+                </label>
+                <div id="offline-meet-worldbooks" class="offline-meet-worldbook-list"></div>
+                <p id="offline-meet-worldbook-empty" class="offline-meet-empty" hidden>还没有可绑定的世界书条目。</p>
+                <label class="offline-meet-field">
+                    <span>提示词预设</span>
+                    <select id="offline-meet-preset-select"></select>
+                </label>
+                <p id="offline-meet-profile" class="offline-meet-profile"></p>
+                <label class="offline-meet-field">
+                    <span>见面场景或补充要求</span>
+                    <textarea id="offline-meet-request" rows="3" placeholder="例如：在周末的咖啡馆初次见面，轻松自然地聊聊近况。"></textarea>
+                </label>
+                <button id="offline-meet-generate" class="offline-meet-primary" type="button">开始 Meet</button>
+                <p id="offline-meet-status" class="offline-meet-status" role="status" aria-live="polite"></p>
+            </section>
         </main>
+    </div>
+    <div id="meet-scene-screen" class="screen">
+        <header class="app-header meet-scene-header">
+            <button class="back-btn" data-target="phone-screen" aria-label="返回 Meet 设置">‹</button>
+            <div class="title-container">
+                <h1 class="title">Meet</h1>
+                <p id="meet-scene-participants" class="meet-scene-participants"></p>
+            </div>
+            <button id="meet-scene-settings-button" class="meet-scene-settings-button" type="button" aria-label="Meet 设置" aria-expanded="false" aria-controls="meet-scene-drawer">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 8.25a3.75 3.75 0 1 0 0 7.5 3.75 3.75 0 0 0 0-7.5Z"/>
+                    <path d="m19.4 13.5 1.1.85-1.6 2.77-1.33-.48a7.8 7.8 0 0 1-1.42.82l-.22 1.39h-3.2l-.22-1.39a7.8 7.8 0 0 1-1.42-.82l-1.33.48-1.6-2.77 1.1-.85a7.1 7.1 0 0 1 0-1.64l-1.1-.85 1.6-2.77 1.33.48a7.8 7.8 0 0 1 1.42-.82l.22-1.39h3.2l.22 1.39a7.8 7.8 0 0 1 1.42.82l1.33-.48 1.6 2.77-1.1.85a7.1 7.1 0 0 1 0 1.64Z"/>
+                </svg>
+            </button>
+        </header>
+        <main class="meet-scene-content">
+            <div id="meet-scene-messages" class="meet-scene-messages" aria-live="polite"></div>
+            <p id="meet-scene-status" class="meet-scene-status" role="status" aria-live="polite"></p>
+            <form id="meet-scene-compose" class="meet-scene-compose">
+                <button id="meet-scene-retry" class="meet-scene-retry" type="button" aria-label="重试上一段剧情" title="重试上一段剧情" hidden>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M20 7v5h-5M4.7 9a7.5 7.5 0 0 1 12.7-2L20 12M4 17v-5h5m10.3 3a7.5 7.5 0 0 1-12.7 2L4 12"/>
+                    </svg>
+                </button>
+                <textarea id="meet-scene-input" rows="2" placeholder="继续这次 Meet…" aria-label="继续剧情" disabled></textarea>
+                <button id="meet-scene-send" type="submit" disabled>继续</button>
+            </form>
+        </main>
+        <div id="meet-scene-drawer-overlay" class="meet-scene-drawer-overlay" hidden>
+            <aside id="meet-scene-drawer" class="meet-scene-drawer" role="dialog" aria-modal="true" aria-labelledby="meet-scene-drawer-title">
+                <header class="meet-scene-drawer-header">
+                    <h2 id="meet-scene-drawer-title">Meet 设置</h2>
+                    <button id="meet-scene-drawer-close" type="button" aria-label="关闭设置">×</button>
+                </header>
+                <section class="meet-scene-drawer-section">
+                    <h3>剧情辅助</h3>
+                    <label class="meet-scene-feature-toggle">
+                        <input id="meet-scene-image-toggle" type="checkbox">
+                        <span class="meet-scene-feature-toggle-track" aria-hidden="true"></span>
+                        <span class="meet-scene-feature-toggle-copy">
+                            <strong>每轮自动生图</strong>
+                            <small>每轮 AI 剧情生成后，使用绘图工坊配置生成场景图。</small>
+                        </span>
+                    </label>
+                    <div id="meet-scene-image-options" class="meet-scene-image-options" hidden>
+                        <label class="meet-scene-image-count">
+                            <span>图片张数（1–20）</span>
+                            <input id="meet-scene-image-count" type="number" min="1" max="20" step="1" inputmode="numeric" value="1">
+                        </label>
+                        <label class="meet-scene-image-mode">
+                            <span>生成方式</span>
+                            <select id="meet-scene-image-mode">
+                                <option value="max">最多生成（至少 1 张）</option>
+                                <option value="fixed">固定生成</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label class="meet-scene-feature-toggle">
+                        <input id="meet-scene-voice-toggle" type="checkbox">
+                        <span class="meet-scene-feature-toggle-track" aria-hidden="true"></span>
+                        <span class="meet-scene-feature-toggle-copy">
+                            <strong>角色语音</strong>
+                            <small>为角色台词显示语音按钮；点击后使用语音工坊生成并播放。</small>
+                        </span>
+                    </label>
+                    <p id="meet-scene-feature-status" class="meet-scene-drawer-status" role="status" aria-live="polite"></p>
+                </section>
+                <section class="meet-scene-drawer-section">
+                    <h3>存档此次见面</h3>
+                    <label class="meet-scene-archive-name">
+                        <span class="sr-only">存档名称</span>
+                        <input id="meet-scene-archive-name" type="text" maxlength="80" placeholder="为这次 Meet 命名">
+                    </label>
+                    <button id="meet-scene-save" class="meet-scene-drawer-primary" type="button">保存当前 Meet</button>
+                    <p id="meet-scene-archive-status" class="meet-scene-drawer-status" role="status" aria-live="polite"></p>
+                </section>
+                <section class="meet-scene-drawer-section">
+                    <h3>以前的 Meet</h3>
+                    <div id="meet-scene-archives" class="meet-scene-archives"></div>
+                </section>
+                <section class="meet-scene-drawer-section">
+                    <h3>共同回忆</h3>
+                    <p class="meet-scene-drawer-help">摘要会以“剧情旁白”写入参与角色的聊天上下文；长期记忆由你自行管理。</p>
+                    <button id="meet-scene-summary-generate" class="meet-scene-drawer-secondary" type="button">生成此次 Meet 摘要</button>
+                    <textarea id="meet-scene-summary" rows="6" placeholder="生成的剧情旁白可在这里编辑…" aria-label="Meet 摘要"></textarea>
+                    <button id="meet-scene-summary-share" class="meet-scene-drawer-primary" type="button" disabled>写入聊天上下文</button>
+                    <p id="meet-scene-summary-status" class="meet-scene-drawer-status" role="status" aria-live="polite"></p>
+                </section>
+            </aside>
+        </div>
+        <div id="meet-scene-image-viewer" class="meet-scene-image-viewer" role="dialog" aria-modal="true" aria-label="Meet 场景图片" hidden>
+            <button id="meet-scene-image-viewer-close" class="meet-scene-image-viewer-close" type="button" aria-label="关闭图片">×</button>
+            <button id="meet-scene-image-viewer-download" class="meet-scene-image-viewer-download" type="button" aria-label="导出图片" title="导出图片">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 17v3h14v-3"/></svg>
+            </button>
+            <img id="meet-scene-image-viewer-image" alt="Meet 场景图片">
+        </div>
     </div>
         <!-- 全局底部导航栏 -->
         <nav class="bottom-nav" id="global-bottom-nav" style="display: none;">
@@ -838,6 +964,14 @@
                             </svg>
                         </div>
                         <span class="menu-item-label">语音工坊</span>
+                    </div>
+                    <div class="menu-item" data-action="preset-workshop">
+                        <div class="menu-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 5h16M4 12h16M4 19h16"/><circle cx="8" cy="5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="19" r="2"/>
+                            </svg>
+                        </div>
+                        <span class="menu-item-label">预设工坊</span>
                     </div>
                 </div>
             </div>
@@ -2750,12 +2884,12 @@
 <script src="js/modules/character_import.js?v=20261028r4"></script>
 <script src="js/modules/chat_render.js?v=20261028r4"></script>
 <script src="js/modules/chat_archives.js?v=20261028r4"></script>
-    <script src="js/modules/chat_ai_airdrop.js?v=20261028r4"></script>
+    <script src="js/modules/chat_ai_airdrop.js?v=20261114"></script>
     <script src="js/modules/chat_ai_prompt.js?v=20261028r4"></script>
     <script src="js/modules/chat_ai_call.js?v=20261028r4"></script>
     <script src="js/modules/smart_reply_control.js?v=20261028r4"></script>
     <script src="js/modules/smart_messaging.js?v=20261028r4"></script>
-    <script src="js/modules/chat_ai.js?v=20261028r4"></script>
+    <script src="js/modules/chat_ai.js?v=20261028r5"></script>
 <script src="js/modules/chat_features.js?v=20261028r4"></script>
 <script src="js/modules/chat_ops.js?v=20261028r4"></script>
 <script src="js/modules/reply_details.js?v=20261028r4"></script>
@@ -2782,7 +2916,7 @@
 <script src="js/modules/worldbook_presets.js?v=20261028r4"></script> <!-- 世界书设定集 -->
 <script src="js/modules/peek.js?v=20261028r4"></script>      <!-- 偷看手机(相册/短信等) -->
 <script src="js/modules/summary_api.js?v=20261028r4"></script>
-<script src="js/modules/vector_memory.js?v=20261028r4"></script>
+<script src="js/modules/vector_memory.js?v=20261028r5"></script>
 <script src="js/modules/vector_memory_ui.js?v=20261028r4"></script>
 <script src="js/modules/journal_automation.js?v=20261028r4"></script>
 <script src="js/modules/journal.js?v=20261028r4"></script>   <!-- 回忆日记生成 -->
@@ -2809,7 +2943,8 @@
 <script src="js/workshop.js?v=20261028r4"></script> <!-- 绘图工坊模块 -->
 <script src="js/modules/voice_workshop.js?v=20261107"></script>
 <script src="js/modules/console.js?v=20261028r4"></script> <!-- 控制台模块 -->
-<script src="js/modules/community.js?v=20261028r4"></script> <!-- 社区模块 -->
+<script src="js/modules/offline_meet.js?v=20261115"></script>
+<script src="js/modules/preset_workshop.js?v=20261107"></script>
 <script src="js/modules/st_unlock.js?v=20261028r4"></script> <!-- 酒馆解锁模块 -->
 <script src="js/modules/reader_parser.js?v=20261028r4"></script> <!-- TXT解析模块 -->
 <script src="js/modules/reader_html.js?v=20261028r4"></script> <!-- 阅读器HTML注入 -->

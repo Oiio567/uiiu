@@ -33,6 +33,8 @@ function initMoreMenu() {
             switchScreen('drawing-workshop-screen');
         } else if (action === 'voice-workshop') {
             openVoiceWorkshop();
+        } else if (action === 'preset-workshop') {
+            openPresetWorkshop();
         } else if (action === 'cot-settings') {
             switchScreen('cot-settings-screen');
         }

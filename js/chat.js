@@ -405,6 +405,13 @@ function openChatRoom(chatId, type) {
     const chat = (type === 'private') ? db.characters.find(c => c.id === chatId) : db.groups.find(g => g.id === chatId);
     if (!chat) return;
 
+    if (type === 'private' && typeof syncOfflineMeetMemoryMessages === 'function' && syncOfflineMeetMemoryMessages(chat)) {
+        saveData().catch(error => {
+            console.error('Meet 记忆消息补齐失败:', error);
+            showToast('Meet 记忆已恢复显示，但未能保存到本机，请检查存储空间。');
+        });
+    }
+
     // 迁移旧的私聊数据 (仅群聊)
     if (type === 'group' && chat.privateSessions && typeof migratePrivateSessionsToHistory === 'function') {
         migratePrivateSessionsToHistory(chat);
