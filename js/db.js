@@ -179,7 +179,7 @@ const globalSettingKeys = [
     'globalCssPresets', 'fontPresets', 'homeSignature', 'insWidgetSettings', 'homeWidgetSettings',
     'inlineThinkingEnabled', 'statusThinkingEnabled', 'chatFolders', 'fontSizeScale', 'activePersonaId', 'moreProfileCardBg', 'statusBarPresets', 'themeSettings', 'themePresets', 'savedKeyboardHeight',
     'globalSendSound', 'globalReceiveSound', 'multiMsgSoundEnabled', 'soundPresets', 'galleryPresets',
-    'cotSettings', 'cotPresets', 'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint',
+    'cotSettings', 'cotPresets', 'onlineRegexGroups', 'offlineRegexGroups', 'hasSeenVideoCallDisclaimer', 'hasSeenVideoCallAvatarHint',
     'workshopSettings', 'workshopLlmPresets', 'workshopPromptPresets', 'voiceWorkshopSettings', 'offlineMeetPromptPresets', 'activeOfflineMeetPromptPresetId', 'offlineMeetWorldBookIds', 'offlineMeetArchives', 'offlineMeetImageEnabled', 'offlineMeetImageCount', 'offlineMeetImageMode', 'offlineMeetVoiceEnabled', 'homeLayoutOrder',
     'homeLayoutPages', 'widgetTemplates', 'addedWidgets', 'backupReminderSettings',
     'stUnlocked'
@@ -282,6 +282,8 @@ var db = {
     activePersonaId: null,
     moreProfileCardBg: 'https://i.postimg.cc/XvFDdTKY/Smart-Select-20251013-023208.jpg',
     statusBarPresets: [],
+    onlineRegexGroups: [],
+    offlineRegexGroups: [],
     themeSettings: {
         global: {
             iconColor: '#000000',
@@ -608,6 +610,8 @@ const loadData = async () => {
             galleryPresets: [],
             cotSettings: { enabled: false, activePresetId: 'default', prefillEnabled: true, callPrefillEnabled: true },
             cotPresets: JSON.parse(JSON.stringify(DEFAULT_COT_PRESETS)),
+            onlineRegexGroups: [],
+            offlineRegexGroups: [],
             hasSeenVideoCallDisclaimer: false,
             hasSeenVideoCallAvatarHint: false,
             workshopSettings: {

@@ -1010,6 +1010,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
         bubbleElement = document.createElement('div');
         bubbleElement.className = `message-bubble ${isSent ? 'sent' : 'received'}`;
         let userText = textMatch[1].trim().replace(/\[发送时间:.*?\]/g, '').trim();
+        userText = window.UwURegexWorkshop?.apply(chat, userText, isSent ? 'user' : 'assistant', false, null, senderId) ?? userText;
         bubbleElement.innerHTML = `<span class="bubble-content">${DOMPurify.sanitize(userText)}</span>`;
         if (!chat.useCustomBubbleCss) {
             bubbleElement.style.backgroundColor = bubbleTheme.bg;
@@ -1035,6 +1036,7 @@ const contentMatch = content.match(/^\[.*?(?:消息|回复)[：:]([\s\S]+)\]$/);
             displayedContent = plainTextMatch[1].trim();
         }
         displayedContent = displayedContent.replace(/\[发送时间:.*?\]/g, '').trim();
+        displayedContent = window.UwURegexWorkshop?.apply(chat, displayedContent, isSent ? 'user' : 'assistant', false, null, senderId) ?? displayedContent;
 
         if (currentChatType === 'private' && !isSent && chat.statusPanel && chat.statusPanel.enabled && chat.statusPanel.regexPattern && !isDebugMode) {
             try {

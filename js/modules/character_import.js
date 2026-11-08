@@ -20,6 +20,7 @@ function setupAddCharModal() {
             maxMemory: 100,
             chatBg: '',
             history: [],
+            regexGroupSettings: {},
             isPinned: false,
             status: '在线',
             worldBookIds: [],
@@ -190,6 +191,8 @@ async function createCharacterFromData(data, avatar) {
         maxMemory: 100,
         chatBg: '',
         history: [],
+        regexGroupSettings: {},
+        stCharacterCard: JSON.parse(JSON.stringify(data)),
         isPinned: false,
         status: '在线',
             worldBookIds: [],
@@ -217,6 +220,14 @@ async function createCharacterFromData(data, avatar) {
             lastTriggerTime: 0
         }
     };
+
+    const importedRegexScripts = window.UwURegexWorkshop?.extractRegexScripts(data) || [];
+    const characterRegexGroupId = window.UwURegexWorkshop?.createCharacterGroup(
+        importedRegexScripts,
+        charData.name,
+        newChar.id
+    );
+    if (characterRegexGroupId) newChar.regexGroupSettings[characterRegexGroupId] = true;
 
     const importedWorldBookIds = [];
     

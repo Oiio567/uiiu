@@ -648,6 +648,9 @@ function filterHistoryForAI(chat, historySlice, ignoreContextDisabled = false) {
         });
     }
 
+    if (window.UwURegexWorkshop?.transformHistory) {
+        filteredHistory = window.UwURegexWorkshop.transformHistory(chat, filteredHistory);
+    }
     return filteredHistory;
 }
 

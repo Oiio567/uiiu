@@ -35,6 +35,8 @@ function initMoreMenu() {
             openVoiceWorkshop();
         } else if (action === 'preset-workshop') {
             openPresetWorkshop();
+        } else if (action === 'regex-workshop') {
+            openRegexWorkshop();
         } else if (action === 'cot-settings') {
             switchScreen('cot-settings-screen');
         }

@@ -341,8 +341,9 @@ function _normalizeApiPresets(arr) {
 
 function _saveApiPresets(arr) {
     db.apiPresets = _normalizeApiPresets(arr);
-    saveData();
+    const saved = saveData();
     window.dispatchEvent(new CustomEvent('api-presets-updated'));
+    return saved;
 }
 
 function populateApiSelect() {
@@ -493,12 +494,39 @@ function importApiPresets() {
     const inp = document.createElement('input');
     inp.type = 'file';
     inp.accept = 'application/json';
-    inp.onchange = function(e){
-        const f = e.target.files[0];
+    inp.onchange = async function(e){
+        const f = e.target.files?.[0];
         if (!f) return;
-        const r = new FileReader();
-        r.onload = function(){ try { const data = JSON.parse(r.result); if (Array.isArray(data)) { _saveApiPresets(data); populateApiSelect(); openApiManageModal(); } else alert('文件格式不正确'); } catch(e){ alert('导入失败：'+e.message); } };
-        r.readAsText(f);
+        try {
+            const data = JSON.parse(await f.text());
+            const presets = Array.isArray(data) ? data : (data && typeof data === 'object' && data.name ? [data] : null);
+            if (!presets) throw new Error('文件格式不正确，应为预设对象或预设列表。');
+            const normalized = _normalizeApiPresets(presets);
+            const previousPresets = db.apiPresets;
+            const previousRegexGroups = Array.isArray(db.onlineRegexGroups)
+                ? JSON.parse(JSON.stringify(db.onlineRegexGroups))
+                : [];
+            const importedRegexGroups = window.UwURegexWorkshop?.importApiPresetGroups(normalized) || [];
+            try {
+                await _saveApiPresets(normalized);
+            } catch (error) {
+                db.apiPresets = previousPresets;
+                if (window.UwURegexWorkshop && Array.isArray(db.onlineRegexGroups)) {
+                    db.onlineRegexGroups = previousRegexGroups;
+                }
+                throw error;
+            }
+            populateApiSelect();
+            openApiManageModal();
+            if (importedRegexGroups.length) {
+                showToast(`已导入 ${normalized.length} 个预设，并为 ${importedRegexGroups.length} 个预设创建正则分组。`);
+            } else {
+                showToast(`已导入 ${normalized.length} 个预设。`);
+            }
+        } catch(error) {
+            console.error('导入 API 预设失败：', error);
+            showToast(`导入失败：${error.message}`);
+        }
     };
     inp.click();
 }

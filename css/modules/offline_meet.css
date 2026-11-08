@@ -287,6 +287,77 @@
     cursor: wait;
 }
 
+.offline-meet-secondary {
+    width: 100%;
+    border: 1px solid var(--primary-color, #007bff);
+    border-radius: 11px;
+    padding: 11px 16px;
+    background: transparent;
+    color: var(--primary-color, #007bff);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.offline-meet-archive-overlay {
+    position: fixed;
+    z-index: 30;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    padding: 20px;
+    background: rgba(16, 20, 28, .45);
+}
+
+.offline-meet-archive-overlay[hidden] {
+    display: none;
+}
+
+.offline-meet-archive-dialog {
+    display: flex;
+    width: min(440px, 100%);
+    max-height: min(620px, 85vh);
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+    box-sizing: border-box;
+    border-radius: 16px;
+    padding: 18px;
+    background: #fff;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, .2);
+}
+
+.offline-meet-archive-header {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.offline-meet-archive-header h2 {
+    margin: 0;
+    color: #292929;
+    font-size: 18px;
+}
+
+.offline-meet-archive-header button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 10px;
+    background: #f3f3f5;
+    color: #555;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.offline-meet-archive-dialog .meet-scene-archives {
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .offline-meet-status {
     min-height: 18px;
     margin: 10px 0 0;
@@ -796,7 +867,8 @@
 }
 
 .meet-scene-image-count,
-.meet-scene-image-mode {
+.meet-scene-image-mode,
+.meet-scene-api-preset {
     display: grid;
     min-width: 0;
     gap: 5px;
@@ -805,7 +877,8 @@
 }
 
 .meet-scene-image-count input,
-.meet-scene-image-mode select {
+.meet-scene-image-mode select,
+.meet-scene-api-preset select {
     width: 100%;
     min-width: 0;
     box-sizing: border-box;

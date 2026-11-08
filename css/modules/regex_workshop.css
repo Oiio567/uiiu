@@ -1,0 +1,331 @@
+#regex-workshop-screen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background: #f6f6f8;
+}
+
+#regex-workshop-screen .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.regex-workshop-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    -webkit-overflow-scrolling: touch;
+}
+
+.regex-workshop-card {
+    max-width: 760px;
+    margin: 0 auto 14px;
+    padding: 18px;
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 3px 14px rgba(0, 0, 0, .05);
+}
+
+.regex-workshop-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.regex-workshop-character-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #666;
+    font-size: 12px;
+}
+
+.regex-workshop-character-filter select {
+    max-width: 190px;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: #fff;
+    color: #555;
+    font: inherit;
+}
+
+.regex-workshop-scope-switch {
+    display: flex;
+    gap: 8px;
+    padding: 4px;
+    border-radius: 10px;
+    background: #f3f4f6;
+}
+
+.regex-workshop-scope-switch button {
+    flex: 1;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px;
+    background: transparent;
+    color: #777;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.regex-workshop-scope-switch button.is-active {
+    background: #fff;
+    color: var(--primary-color, #007bff);
+    box-shadow: 0 1px 5px rgba(0, 0, 0, .08);
+}
+
+.regex-workshop-toolbar button,
+.regex-workshop-file-label {
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 8px 11px;
+    background: #fff;
+    color: #555;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.regex-workshop-toolbar button:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+}
+
+#regex-workshop-import {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.regex-workshop-toolbar button.is-danger {
+    color: #c44;
+}
+
+.regex-workshop-groups,
+.regex-workshop-rules {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.regex-workshop-group {
+    display: grid;
+    gap: 9px;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 12px;
+}
+
+.regex-workshop-group-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+}
+
+.regex-workshop-group-heading strong {
+    min-width: 0;
+    color: #333;
+    font-size: 13px;
+    overflow-wrap: anywhere;
+}
+
+.regex-workshop-group-heading > span {
+    color: #999;
+    font-size: 11px;
+}
+
+.regex-workshop-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #666;
+    font-size: 11px;
+}
+
+.regex-workshop-toggle input {
+    accent-color: var(--primary-color, #007bff);
+}
+
+.regex-workshop-roles {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 12px;
+    padding-top: 8px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.regex-workshop-roles > span,
+.regex-workshop-roles > small {
+    color: #888;
+    font-size: 11px;
+}
+
+.regex-workshop-rule {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+}
+
+.regex-workshop-rule .regex-workshop-group-heading {
+    justify-content: space-between;
+}
+
+.regex-workshop-rule .regex-workshop-field {
+    margin-top: 0;
+}
+
+.regex-workshop-toolbar #regex-workshop-save-edit {
+    border-color: var(--primary-color, #007bff);
+    background: var(--primary-color, #007bff);
+    color: #fff;
+}
+
+.regex-workshop-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.regex-workshop-heading-icon {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 14px;
+    background: rgba(0, 123, 255, .1);
+    color: var(--primary-color, #007bff);
+    font: 600 18px monospace;
+}
+
+.regex-workshop-heading h2,
+.regex-workshop-results-heading h2 {
+    margin: 0 0 4px;
+    color: #242424;
+    font-size: 16px;
+}
+
+.regex-workshop-heading p {
+    margin: 0;
+    color: #888;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.regex-workshop-field {
+    display: grid;
+    gap: 7px;
+    margin-top: 14px;
+    color: #666;
+    font-size: 12px;
+}
+
+.regex-workshop-field input,
+.regex-workshop-field select,
+.regex-workshop-field textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fafafa;
+    color: #333;
+    font: 13px/1.6 monospace;
+}
+
+.regex-workshop-field input:focus,
+.regex-workshop-field select:focus,
+.regex-workshop-field textarea:focus {
+    border-color: var(--primary-color, #007bff);
+    outline: none;
+    background: #fff;
+}
+
+.regex-workshop-field textarea {
+    resize: vertical;
+}
+
+.regex-workshop-results-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.regex-workshop-results-heading span,
+.regex-workshop-status {
+    color: #888;
+    font-size: 12px;
+}
+
+.regex-workshop-results-heading span {
+    text-align: right;
+}
+
+.regex-workshop-status {
+    margin: 8px 0 0;
+    line-height: 1.6;
+}
+
+.regex-workshop-status.is-error {
+    color: #c44;
+}
+
+.regex-workshop-matches {
+    display: grid;
+    gap: 9px;
+    margin-top: 10px;
+}
+
+.regex-workshop-match {
+    display: grid;
+    gap: 7px;
+    min-width: 0;
+    padding: 11px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+}
+
+.regex-workshop-match strong {
+    color: #555;
+    font-size: 12px;
+}
+
+.regex-workshop-match code {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    color: #333;
+    font: 13px/1.6 monospace;
+}
+
+.regex-workshop-group {
+    margin: 0;
+    overflow-wrap: anywhere;
+    color: #888;
+    font-size: 12px;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 560px) {
+    .regex-workshop-content {
+        padding: 12px;
+    }
+
+    .regex-workshop-card {
+        padding: 15px;
+    }
+}

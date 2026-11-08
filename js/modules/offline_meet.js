@@ -316,6 +316,119 @@ function offlineMeetApiMessages(messages, provider) {
     };
 }
 
+function offlineMeetApiPresetId(preset) {
+    return preset?.id || preset?.name || '';
+}
+
+function findOfflineMeetApiPreset(id) {
+    if (!id) return null;
+    return (Array.isArray(db.apiPresets) ? db.apiPresets : [])
+        .find(preset => String(offlineMeetApiPresetId(preset)) === String(id)) || null;
+}
+
+function findMatchingOfflineMeetApiPreset(config) {
+    return (Array.isArray(db.apiPresets) ? db.apiPresets : []).find(preset => {
+        const data = preset?.data;
+        return data
+            && data.apiUrl === config.url
+            && data.apiKey === config.key
+            && data.model === config.model
+            && (data.provider || 'newapi') === (config.provider || 'newapi');
+    }) || null;
+}
+
+function offlineMeetApiConfigFromPreset(preset, baseConfig) {
+    const data = preset?.data;
+    if (typeof data?.apiUrl !== 'string' || !data.apiUrl.trim()
+        || typeof data.apiKey !== 'string' || !data.apiKey.trim()
+        || typeof data.model !== 'string' || !data.model.trim()) {
+        throw new Error('该 API 预设缺少地址、密钥或模型，无法用于 Meet。');
+    }
+    if ((BLOCKED_API_DOMAINS || []).some(domain => data.apiUrl.includes(domain))) {
+        throw new Error('该 API 站点已被屏蔽，无法用于 Meet。');
+    }
+    return {
+        ...baseConfig,
+        url: data.apiUrl,
+        key: data.apiKey,
+        model: data.model,
+        provider: data.provider || baseConfig.provider || 'newapi',
+        temperatureEnabled: typeof data.temperatureEnabled === 'boolean'
+            ? data.temperatureEnabled
+            : baseConfig.temperatureEnabled,
+        temperature: typeof data.temperature === 'number'
+            ? data.temperature
+            : baseConfig.temperature
+    };
+}
+
+function renderMeetSceneApiPresets(session) {
+    const select = document.getElementById('meet-scene-api-preset');
+    if (!select) return;
+    select.replaceChildren();
+
+    const currentOption = document.createElement('option');
+    currentOption.value = 'current';
+    currentOption.textContent = '当前 Meet API 设置';
+    select.appendChild(currentOption);
+
+    const presets = Array.isArray(db.apiPresets) ? db.apiPresets : [];
+    presets.forEach((preset, index) => {
+        const option = document.createElement('option');
+        option.value = `preset:${index}`;
+        option.textContent = preset?.name || `未命名预设 ${index + 1}`;
+        const data = preset?.data;
+        option.disabled = typeof data?.apiUrl !== 'string' || !data.apiUrl.trim()
+            || typeof data.apiKey !== 'string' || !data.apiKey.trim()
+            || typeof data.model !== 'string' || !data.model.trim();
+        select.appendChild(option);
+    });
+
+    const selectedPreset = findOfflineMeetApiPreset(session.apiPresetId)
+        || findMatchingOfflineMeetApiPreset(session.apiConfig);
+    if (selectedPreset) {
+        const index = presets.indexOf(selectedPreset);
+        if (index >= 0) select.value = `preset:${index}`;
+    } else {
+        select.value = 'current';
+    }
+    select.disabled = presets.length === 0;
+    if (!presets.length) currentOption.textContent = '暂无主 API 预设';
+}
+
+function changeMeetSceneApiPreset(event) {
+    const session = offlineMeetSession;
+    const select = event.currentTarget;
+    const status = document.getElementById('meet-scene-api-status');
+    if (!session) return;
+
+    if (select.value === 'current') {
+        session.apiConfig = { ...(session.baseApiConfig || session.apiConfig) };
+        session.apiPresetId = session.baseApiPresetId || '';
+        status.textContent = '已恢复当前 Meet API 设置；全局 API 设置未更改。';
+        return;
+    }
+
+    const index = Number(select.value.slice('preset:'.length));
+    const presets = Array.isArray(db.apiPresets) ? db.apiPresets : [];
+    const preset = Number.isSafeInteger(index) ? presets[index] : null;
+    if (!preset) {
+        status.textContent = '未找到所选 API 预设，请重新选择。';
+        renderMeetSceneApiPresets(session);
+        return;
+    }
+
+    try {
+        session.apiConfig = offlineMeetApiConfigFromPreset(preset, session.baseApiConfig || session.apiConfig);
+        session.apiPresetId = offlineMeetApiPresetId(preset);
+        status.textContent = `已切换为「${preset.name || '未命名预设'}」，仅影响当前 Meet 后续生成。`;
+    } catch (error) {
+        console.error('切换 Meet API 预设失败:', error);
+        status.textContent = error.message || '切换 API 预设失败。';
+        renderMeetSceneApiPresets(session);
+    }
+}
+
 function offlineMeetGenerationConfig(config, preset) {
     const settings = { model: config.model, stream: false };
     const data = preset?.data || {};
@@ -449,6 +562,8 @@ async function generateOfflineMeet() {
         preset,
         getOfflineMeetWorldBookText()
     );
+    const baseApiConfig = { ...config };
+    const baseApiPreset = findMatchingOfflineMeetApiPreset(baseApiConfig);
     offlineMeetSession = {
         id: createOfflineMeetId(),
         createdAt: Date.now(),
@@ -458,7 +573,10 @@ async function generateOfflineMeet() {
         messages,
         dialogueMessages: [],
         initialRequest: document.getElementById('offline-meet-request').value.trim(),
-        apiConfig: { ...config },
+        apiConfig: { ...baseApiConfig },
+        baseApiConfig,
+        baseApiPresetId: offlineMeetApiPresetId(baseApiPreset),
+        apiPresetId: offlineMeetApiPresetId(baseApiPreset),
         preset,
         presetId: preset?.id || '',
         imageSettings: {
@@ -904,43 +1022,65 @@ function formatOfflineMeetTime(timestamp) {
 }
 
 function renderMeetSceneArchives() {
-    const list = document.getElementById('meet-scene-archives');
-    if (!list) return;
-    list.replaceChildren();
+    const lists = [
+        document.getElementById('meet-scene-archives'),
+        document.getElementById('offline-meet-archives')
+    ].filter(Boolean);
     const archives = [...(db.offlineMeetArchives || [])].sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
-    if (!archives.length) {
-        const empty = document.createElement('p');
-        empty.className = 'meet-scene-archive-empty';
-        empty.textContent = '还没有保存过 Meet。';
-        list.appendChild(empty);
-        return;
-    }
 
-    archives.forEach(archive => {
-        const card = document.createElement('article');
-        card.className = 'meet-scene-archive-card';
-        const details = document.createElement('div');
-        const title = document.createElement('strong');
-        title.textContent = archive.name || '未命名 Meet';
-        const meta = document.createElement('small');
-        const names = Array.isArray(archive.participantNames) ? archive.participantNames.join('、') : '';
-        meta.textContent = `${names || '角色已不可用'} · ${formatOfflineMeetTime(archive.updatedAt || archive.createdAt)}`;
-        details.append(title, meta);
-        const loadButton = document.createElement('button');
-        loadButton.type = 'button';
-        loadButton.dataset.loadMeetId = archive.id;
-        loadButton.textContent = '读档';
-        const deleteButton = document.createElement('button');
-        deleteButton.type = 'button';
-        deleteButton.className = 'meet-scene-archive-delete';
-        deleteButton.dataset.deleteMeetId = archive.id;
-        deleteButton.textContent = '删除';
-        const actions = document.createElement('div');
-        actions.className = 'meet-scene-archive-actions';
-        actions.append(loadButton, deleteButton);
-        card.append(details, actions);
-        list.appendChild(card);
+    lists.forEach(list => {
+        list.replaceChildren();
+        if (!archives.length) {
+            const empty = document.createElement('p');
+            empty.className = 'meet-scene-archive-empty';
+            empty.textContent = '还没有保存过 Meet。';
+            list.appendChild(empty);
+            return;
+        }
+
+        archives.forEach(archive => {
+            const card = document.createElement('article');
+            card.className = 'meet-scene-archive-card';
+            const details = document.createElement('div');
+            const title = document.createElement('strong');
+            title.textContent = archive.name || '未命名 Meet';
+            const meta = document.createElement('small');
+            const names = Array.isArray(archive.participantNames) ? archive.participantNames.join('、') : '';
+            meta.textContent = `${names || '角色已不可用'} · ${formatOfflineMeetTime(archive.updatedAt || archive.createdAt)}`;
+            details.append(title, meta);
+            const loadButton = document.createElement('button');
+            loadButton.type = 'button';
+            loadButton.dataset.loadMeetId = archive.id;
+            loadButton.textContent = '读档';
+            const deleteButton = document.createElement('button');
+            deleteButton.type = 'button';
+            deleteButton.className = 'meet-scene-archive-delete';
+            deleteButton.dataset.deleteMeetId = archive.id;
+            deleteButton.textContent = '删除';
+            const actions = document.createElement('div');
+            actions.className = 'meet-scene-archive-actions';
+            actions.append(loadButton, deleteButton);
+            card.append(details, actions);
+            list.appendChild(card);
+        });
     });
+}
+
+function openOfflineMeetArchives() {
+    const overlay = document.getElementById('offline-meet-archive-overlay');
+    overlay.hidden = false;
+    document.getElementById('offline-meet-load').setAttribute('aria-expanded', 'true');
+    document.getElementById('offline-meet-archive-status').textContent = '';
+    renderMeetSceneArchives();
+    document.getElementById('offline-meet-archive-close').focus();
+}
+
+function closeOfflineMeetArchives() {
+    const overlay = document.getElementById('offline-meet-archive-overlay');
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    document.getElementById('offline-meet-load').setAttribute('aria-expanded', 'false');
+    document.getElementById('offline-meet-load').focus();
 }
 
 function openMeetSceneDrawer() {
@@ -953,6 +1093,8 @@ function openMeetSceneDrawer() {
     document.getElementById('meet-scene-image-mode').value = imageSettings.mode;
     document.getElementById('meet-scene-image-options').hidden = !imageSettings.enabled;
     document.getElementById('meet-scene-voice-toggle').checked = db.offlineMeetVoiceEnabled === true;
+    renderMeetSceneApiPresets(session);
+    document.getElementById('meet-scene-api-status').textContent = '';
     document.getElementById('meet-scene-feature-status').textContent = '';
     const archive = (db.offlineMeetArchives || []).find(item => item.id === session.archiveId);
     document.getElementById('meet-scene-archive-name').value = archive?.name || '';
@@ -1056,6 +1198,7 @@ function snapshotOfflineMeetSession(session, name) {
         pendingRequest: offlineMeetPendingRequest ? JSON.parse(JSON.stringify(offlineMeetPendingRequest)) : null,
         pendingReplacesLastReply: offlineMeetPendingReplacesLastReply,
         initialRequest: session.initialRequest || '',
+        apiPresetId: session.apiPresetId || '',
         presetId: session.presetId || '',
         preset: session.preset ? JSON.parse(JSON.stringify(session.preset)) : null,
         imageSettings: { ...getOfflineMeetImageSettings(session) },
@@ -1108,7 +1251,7 @@ async function saveMeetSceneSession() {
     }
 }
 
-async function deleteMeetSceneArchive(archiveId) {
+async function deleteMeetSceneArchive(archiveId, statusId = 'meet-scene-archive-status') {
     const archives = db.offlineMeetArchives || [];
     const archive = archives.find(item => item.id === archiveId);
     if (!archive || !confirm(`确定删除“${archive.name || '未命名 Meet'}”吗？此操作不可恢复。`)) return;
@@ -1122,7 +1265,7 @@ async function deleteMeetSceneArchive(archiveId) {
         delete offlineMeetSession.archiveName;
     }
 
-    const status = document.getElementById('meet-scene-archive-status');
+    const status = document.getElementById(statusId);
     status.textContent = '正在删除存档…';
     try {
         await saveData();
@@ -1152,7 +1295,9 @@ function loadMeetSceneArchive(archiveId) {
     const archive = (db.offlineMeetArchives || []).find(item => item.id === archiveId);
     if (!archive) return;
     if (offlineMeetSession?.archiveId === archiveId) {
+        closeOfflineMeetArchives();
         closeMeetSceneDrawer();
+        switchScreen('meet-scene-screen');
         return;
     }
     if (offlineMeetSession?.dialogueMessages?.length && !confirm('读档会替换当前 Meet，未存档的进度将无法恢复。继续吗？')) return;
@@ -1161,6 +1306,19 @@ function loadMeetSceneArchive(archiveId) {
         db.characters.find(character => String(character.id) === String(id))
         || { id, remarkName: archive.participantNames?.[index] || '已删除角色' }
     );
+    const baseApiConfig = { ...(db.apiSettings || {}) };
+    const baseApiPreset = findMatchingOfflineMeetApiPreset(baseApiConfig);
+    let apiConfig = { ...baseApiConfig };
+    let apiPresetId = '';
+    const archivedApiPreset = findOfflineMeetApiPreset(archive.apiPresetId);
+    if (archivedApiPreset) {
+        try {
+            apiConfig = offlineMeetApiConfigFromPreset(archivedApiPreset, baseApiConfig);
+            apiPresetId = offlineMeetApiPresetId(archivedApiPreset);
+        } catch (error) {
+            console.error('恢复 Meet API 预设失败:', error);
+        }
+    }
     offlineMeetSession = {
         id: archive.sessionId || archive.id,
         archiveId: archive.id,
@@ -1172,7 +1330,10 @@ function loadMeetSceneArchive(archiveId) {
         messages: JSON.parse(JSON.stringify(archive.messages || [])),
         dialogueMessages: JSON.parse(JSON.stringify(archive.dialogueMessages || [])),
         initialRequest: archive.initialRequest || '',
-        apiConfig: { ...(db.apiSettings || {}) },
+        apiConfig,
+        baseApiConfig,
+        baseApiPresetId: offlineMeetApiPresetId(baseApiPreset),
+        apiPresetId,
         preset: archive.preset ? JSON.parse(JSON.stringify(archive.preset)) : null,
         presetId: archive.presetId || '',
         imageSettings: {
@@ -1197,7 +1358,9 @@ function loadMeetSceneArchive(archiveId) {
     document.getElementById('meet-scene-status').textContent = offlineMeetPendingRequest
         ? '这次 Meet 有一条未完成的生成请求，可以重试。'
         : '';
+    closeOfflineMeetArchives();
     closeMeetSceneDrawer();
+    switchScreen('meet-scene-screen');
 }
 
 async function generateMeetSceneSummary() {
@@ -1358,6 +1521,24 @@ async function shareMeetSceneSummary() {
 async function requestOfflineMeetReply(messages, replaceLastReply = false) {
     const session = offlineMeetSession;
     if (!session) throw new Error('Meet 场景已结束，请重新开始。');
+    const regexWorkshop = window.UwURegexWorkshop;
+    const promptMessages = regexWorkshop?.applyOfflineMeet
+        ? messages.map((message, index) => {
+            if (!message || !['user', 'assistant'].includes(message.role) || typeof message.content !== 'string') {
+                return message;
+            }
+            return {
+                ...message,
+                content: regexWorkshop.applyOfflineMeet(
+                    session,
+                    message.content,
+                    message.role,
+                    true,
+                    messages.length - index - 1
+                )
+            };
+        })
+        : messages;
     const config = session.apiConfig;
     const provider = config.provider || 'newapi';
     const url = config.url.replace(/\/+$/, '');
@@ -1370,7 +1551,7 @@ async function requestOfflineMeetReply(messages, replaceLastReply = false) {
     const imageSettings = getOfflineMeetImageSettings(session);
     const requestMessages = imageSettings.enabled
         ? [
-            ...messages,
+            ...promptMessages,
             {
                 role: 'system',
                 content: `本轮剧情需要插入场景图片标记。请在剧情自然适合配图的位置，将 ${OFFLINE_MEET_IMAGE_MARKER} 独占一行作为插图位置，不要解释或改写这个标记。${imageSettings.mode === 'fixed'
@@ -1378,7 +1559,7 @@ async function requestOfflineMeetReply(messages, replaceLastReply = false) {
                     : `本轮插入 1 到 ${imageSettings.count} 个标记，最多 ${imageSettings.count} 个。`}`
             }
         ]
-        : messages;
+        : promptMessages;
     const requestBody = {
         ...offlineMeetGenerationConfig(config, session.preset),
         ...offlineMeetApiMessages(requestMessages, provider)
@@ -1405,9 +1586,12 @@ async function requestOfflineMeetReply(messages, replaceLastReply = false) {
             ? (payload.candidates?.[0]?.content?.parts || []).map(part => part.text || '').join('')
             : payload.choices?.[0]?.message?.content;
         if (typeof responseTextContent !== 'string' || !responseTextContent.trim()) throw new Error('API 未返回有效的 Meet 剧情。');
-        const text = imageSettings.enabled
-            ? normalizeOfflineMeetImageMarkers(responseTextContent.trim(), imageSettings)
+        const regexedResponse = regexWorkshop?.applyOfflineMeet
+            ? regexWorkshop.applyOfflineMeet(session, responseTextContent.trim(), 'assistant')
             : responseTextContent.trim();
+        const text = imageSettings.enabled
+            ? normalizeOfflineMeetImageMarkers(regexedResponse, imageSettings)
+            : regexedResponse;
 
         session.messages = [...messages, { role: 'assistant', content: text }];
         const dialogueMessages = [...(session.dialogueMessages || [])];
@@ -1562,9 +1746,18 @@ function setupOfflineMeet() {
             document.getElementById('offline-meet-generate').disabled = false;
         });
     });
+    document.getElementById('offline-meet-load').addEventListener('click', event => {
+        if (event.currentTarget.getAttribute('aria-expanded') === 'true') closeOfflineMeetArchives();
+        else openOfflineMeetArchives();
+    });
+    document.getElementById('offline-meet-archive-close').addEventListener('click', closeOfflineMeetArchives);
+    document.getElementById('offline-meet-archive-overlay').addEventListener('click', event => {
+        if (event.target.id === 'offline-meet-archive-overlay') closeOfflineMeetArchives();
+    });
     document.getElementById('meet-scene-compose').addEventListener('submit', submitMeetSceneContinuation);
     document.getElementById('meet-scene-retry').addEventListener('click', retryMeetSceneRequest);
     document.getElementById('meet-scene-settings-button').addEventListener('click', openMeetSceneDrawer);
+    document.getElementById('meet-scene-api-preset').addEventListener('change', changeMeetSceneApiPreset);
     document.getElementById('meet-scene-image-toggle').addEventListener('change', event => {
         saveMeetSceneFeatureToggle(event, 'offlineMeetImageEnabled', '自动生图').catch(error => {
             console.error('保存 Meet 自动生图开关失败:', error);
@@ -1593,15 +1786,22 @@ function setupOfflineMeet() {
         if (event.target.id === 'meet-scene-drawer-overlay') closeMeetSceneDrawer();
     });
     document.getElementById('meet-scene-save').addEventListener('click', saveMeetSceneSession);
-    document.getElementById('meet-scene-archives').addEventListener('click', event => {
+    const handleMeetArchiveClick = event => {
         const deleteButton = event.target.closest('button[data-delete-meet-id]');
         if (deleteButton) {
-            deleteMeetSceneArchive(deleteButton.dataset.deleteMeetId);
+            const statusId = event.currentTarget.id === 'offline-meet-archives'
+                ? (document.getElementById('offline-meet-archive-overlay').hidden
+                    ? 'offline-meet-status'
+                    : 'offline-meet-archive-status')
+                : 'meet-scene-archive-status';
+            deleteMeetSceneArchive(deleteButton.dataset.deleteMeetId, statusId);
             return;
         }
         const loadButton = event.target.closest('button[data-load-meet-id]');
         if (loadButton) loadMeetSceneArchive(loadButton.dataset.loadMeetId);
-    });
+    };
+    document.getElementById('meet-scene-archives').addEventListener('click', handleMeetArchiveClick);
+    document.getElementById('offline-meet-archives').addEventListener('click', handleMeetArchiveClick);
     document.getElementById('meet-scene-summary-generate').addEventListener('click', generateMeetSceneSummary);
     document.getElementById('meet-scene-summary-share').addEventListener('click', shareMeetSceneSummary);
     document.getElementById('meet-scene-summary').addEventListener('input', event => {
@@ -1610,6 +1810,7 @@ function setupOfflineMeet() {
     });
     document.addEventListener('keydown', event => {
         if (event.key === 'Escape') closeMeetSceneDrawer();
+        if (event.key === 'Escape') closeOfflineMeetArchives();
         if (event.key === 'Escape') {
             document.getElementById('meet-scene-image-viewer').hidden = true;
             activeOfflineMeetImageData = '';

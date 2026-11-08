@@ -54,8 +54,9 @@
     <link rel="stylesheet" href="css/workshop.css?v=20261028r4">
     <link rel="stylesheet" href="css/modules/voice_workshop.css?v=20261107">
     <link rel="stylesheet" href="css/modules/console.css?v=20261028r4">
-    <link rel="stylesheet" href="css/modules/offline_meet.css?v=20261115">
+    <link rel="stylesheet" href="css/modules/offline_meet.css?v=20261117">
     <link rel="stylesheet" href="css/modules/preset_workshop.css?v=20261107">
+    <link rel="stylesheet" href="css/modules/regex_workshop.css?v=20261108r2">
     <link rel="stylesheet" href="css/modules/reader.css?v=20261028r4">
 
     <!-- Other Styles -->
@@ -217,9 +218,20 @@
                     <textarea id="offline-meet-request" rows="3" placeholder="例如：在周末的咖啡馆初次见面，轻松自然地聊聊近况。"></textarea>
                 </label>
                 <button id="offline-meet-generate" class="offline-meet-primary" type="button">开始 Meet</button>
+                <button id="offline-meet-load" class="offline-meet-secondary" type="button" aria-expanded="false" aria-controls="offline-meet-archive-overlay">读取Meet</button>
                 <p id="offline-meet-status" class="offline-meet-status" role="status" aria-live="polite"></p>
             </section>
         </main>
+        <div id="offline-meet-archive-overlay" class="offline-meet-archive-overlay" hidden>
+            <section class="offline-meet-archive-dialog" role="dialog" aria-modal="true" aria-labelledby="offline-meet-archive-title">
+                <header class="offline-meet-archive-header">
+                    <h2 id="offline-meet-archive-title">读取Meet</h2>
+                    <button id="offline-meet-archive-close" type="button" aria-label="关闭">×</button>
+                </header>
+                <div id="offline-meet-archives" class="meet-scene-archives offline-meet-archives"></div>
+                <p id="offline-meet-archive-status" class="offline-meet-status" role="status" aria-live="polite"></p>
+            </section>
+        </div>
     </div>
     <div id="meet-scene-screen" class="screen">
         <header class="app-header meet-scene-header">
@@ -254,6 +266,15 @@
                     <h2 id="meet-scene-drawer-title">Meet 设置</h2>
                     <button id="meet-scene-drawer-close" type="button" aria-label="关闭设置">×</button>
                 </header>
+                <section class="meet-scene-drawer-section">
+                    <h3>剧情生成 API</h3>
+                    <label class="meet-scene-api-preset">
+                        <span>当前 API 预设</span>
+                        <select id="meet-scene-api-preset" aria-describedby="meet-scene-api-help"></select>
+                    </label>
+                    <p id="meet-scene-api-help" class="meet-scene-drawer-help">读取设置中的主 API 预设，仅影响当前 Meet 后续生成，不会修改全局 API 设置。</p>
+                    <p id="meet-scene-api-status" class="meet-scene-drawer-status" role="status" aria-live="polite"></p>
+                </section>
                 <section class="meet-scene-drawer-section">
                     <h3>剧情辅助</h3>
                     <label class="meet-scene-feature-toggle">
@@ -972,6 +993,14 @@
                             </svg>
                         </div>
                         <span class="menu-item-label">预设工坊</span>
+                    </div>
+                    <div class="menu-item" data-action="regex-workshop">
+                        <div class="menu-icon-wrapper">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 4l-4 16"/>
+                            </svg>
+                        </div>
+                        <span class="menu-item-label">正则工坊</span>
                     </div>
                 </div>
             </div>
@@ -2906,7 +2935,7 @@
 <script src="js/modules/keep_alive.js?v=20261028r4"></script> <!-- 跨平台持续运行增强 -->
 <script src="js/modules/message_notifications.js?v=20261028r4"></script>
 <script src="js/modules/shiye.js?v=20261028r4"></script>
-<script src="js/modules/settings_api.js?v=20261028r4"></script> <!-- API 设置与预设 -->
+<script src="js/modules/settings_api.js?v=20261108r2"></script> <!-- API 设置与预设 -->
 <script src="js/modules/settings_presets.js?v=20261028r4"></script> <!-- 预设管理 (气泡、人设等) -->
 <script src="js/modules/settings_customize.js?v=20261028r4"></script> <!-- 个性化与外观设置 -->
 
@@ -2927,6 +2956,7 @@
 <script src="js/modules/widget_market.js?v=20261028r4"></script> <!-- 小组件市场 -->
 <script src="js/modules/tutorial.js?v=20261028r4"></script>  <!-- 教程、更新日志、GitHub备份 -->
 <script src="js/modules/more_menu.js?v=20261028r4"></script> <!-- 更多菜单与状态栏管理 -->
+<script src="js/modules/regex_workshop.js?v=20261108r4"></script>
 <script src="js/modules/search.js?v=20261028r4"></script> <!-- 聊天记录搜索模块 -->
 <script src="js/modules/battery_interaction.js?v=20261028r4"></script> <!-- 电量交互模块 -->
 <script src="js/modules/gallery.js?v=20261028r4"></script> <!-- 角色相册管理模块 -->
@@ -2943,7 +2973,7 @@
 <script src="js/workshop.js?v=20261028r4"></script> <!-- 绘图工坊模块 -->
 <script src="js/modules/voice_workshop.js?v=20261107"></script>
 <script src="js/modules/console.js?v=20261028r4"></script> <!-- 控制台模块 -->
-<script src="js/modules/offline_meet.js?v=20261115"></script>
+<script src="js/modules/offline_meet.js?v=20261108r2"></script>
 <script src="js/modules/preset_workshop.js?v=20261107"></script>
 <script src="js/modules/st_unlock.js?v=20261028r4"></script> <!-- 酒馆解锁模块 -->
 <script src="js/modules/reader_parser.js?v=20261028r4"></script> <!-- TXT解析模块 -->
